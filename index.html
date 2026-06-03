@@ -7,374 +7,115 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0e0f11;
-    --surface: #16181c;
-    --surface2: #1d2026;
-    --border: #2a2d35;
-    --border2: #353840;
-    --text: #e8eaf0;
-    --muted: #7a7f8e;
-    --accent: #4ade80;
-    --accent-dim: rgba(74, 222, 128, 0.12);
-    --accent-dim2: rgba(74, 222, 128, 0.22);
-    --danger: #f87171;
-    --danger-dim: rgba(248, 113, 113, 0.12);
-    --warn: #fbbf24;
-    --warn-dim: rgba(251, 191, 36, 0.12);
-    --info: #60a5fa;
-    --info-dim: rgba(96, 165, 250, 0.12);
-    --mono: 'DM Mono', monospace;
-    --sans: 'Syne', sans-serif;
-    --radius: 8px;
-    --radius-lg: 14px;
-  }
-
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  /* Layout */
-  .shell { display: flex; min-height: 100vh; }
-
-  /* Sidebar */
-  .sidebar {
-    width: 220px;
-    min-height: 100vh;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 24px 0;
-    position: fixed;
-    top: 0; left: 0;
-    z-index: 10;
-  }
-  .logo {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    padding: 0 20px 24px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
-  }
-  .logo span { color: var(--accent); }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 20px;
-    cursor: pointer;
-    border-radius: 0;
-    color: var(--muted);
-    font-size: 13.5px;
-    font-weight: 500;
-    transition: all 0.15s;
-    border-left: 3px solid transparent;
-  }
-  .nav-item:hover { color: var(--text); background: var(--surface2); }
-  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
-  .nav-icon { font-size: 16px; }
-
-  /* Main */
-  .main {
-    margin-left: 220px;
-    flex: 1;
-    padding: 32px 36px;
-    max-width: 1100px;
-  }
-
-  /* Topbar */
-  .topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 28px;
-  }
-  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
-  .topbar-actions { display: flex; gap: 10px; }
-
-  /* Buttons */
-  .btn {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 8px 16px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border2);
-    background: var(--surface2);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn:hover { border-color: var(--border2); background: #252830; }
-  .btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #0a1a0f;
-    font-weight: 600;
-  }
-  .btn-primary:hover { background: #3dc76f; }
-  .btn-danger { border-color: var(--danger); color: var(--danger); background: var(--danger-dim); }
-  .btn-danger:hover { background: rgba(248,113,113,0.2); }
-  .btn-sm { padding: 5px 10px; font-size: 12px; }
-
-  /* Stats */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 28px;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 18px 20px;
-  }
-  .stat-label { font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 8px; letter-spacing: 0.3px; }
-  .stat-value { font-size: 26px; font-weight: 700; letter-spacing: -1px; font-family: var(--mono); }
-  .stat-value.green { color: var(--accent); }
-  .stat-value.red { color: var(--danger); }
-  .stat-value.yellow { color: var(--warn); }
-
-  /* Toolbar */
-  .toolbar {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 18px;
-    flex-wrap: wrap;
-  }
-  .search-wrap { position: relative; flex: 1; min-width: 200px; }
-  .search-wrap input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 12px 8px 36px;
-    border-radius: var(--radius);
-    font-family: var(--sans);
-    font-size: 13.5px;
-    outline: none;
-    transition: border 0.15s;
-  }
-  .search-wrap input:focus { border-color: var(--accent); }
-  .search-icon {
-    position: absolute; left: 11px; top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    font-size: 15px;
-    pointer-events: none;
-  }
-  select {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 12px;
-    border-radius: var(--radius);
-    font-family: var(--sans);
-    font-size: 13px;
-    cursor: pointer;
-    outline: none;
-  }
-  select:focus { border-color: var(--accent); }
-
-  /* Table */
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-  table { width: 100%; border-collapse: collapse; }
-  thead tr { background: var(--surface2); }
-  th {
-    padding: 11px 16px;
-    text-align: left;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-  th.sortable { cursor: pointer; user-select: none; }
-  th.sortable:hover { color: var(--text); }
-  td {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13.5px;
-    vertical-align: middle;
-  }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
-  .mono { font-family: var(--mono); font-size: 13px; }
-
-  /* Badges */
-  .badge {
-    display: inline-block;
-    padding: 3px 9px;
-    border-radius: 20px;
-    font-size: 11.5px;
-    font-weight: 600;
-    font-family: var(--mono);
-  }
-  .badge-ok { background: var(--accent-dim); color: var(--accent); }
-  .badge-low { background: var(--warn-dim); color: var(--warn); }
-  .badge-out { background: var(--danger-dim); color: var(--danger); }
-
-  /* Action buttons in rows */
-  .row-actions { display: flex; gap: 6px; }
-
-  /* Modal */
-  .modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.65);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-lg);
-    padding: 28px 30px;
-    width: 460px;
-    max-width: 96vw;
-  }
-  .modal-title {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 22px;
-  }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
-  .form-group.full { grid-column: 1 / -1; }
-  label { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0.3px; }
-  input[type="text"], input[type="number"], input[type="date"], textarea {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 11px;
-    border-radius: var(--radius);
-    font-family: var(--sans);
-    font-size: 13.5px;
-    outline: none;
-    transition: border 0.15s;
-  }
-  input[type="text"]:focus, input[type="number"]:focus,
-  input[type="date"]:focus, textarea:focus { border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 70px; }
-  .modal-footer {
-    display: flex; justify-content: flex-end; gap: 10px;
-    margin-top: 22px;
-    padding-top: 18px;
-    border-top: 1px solid var(--border);
-  }
-
-  /* Empty state */
-  .empty {
-    text-align: center;
-    padding: 48px 20px;
-    color: var(--muted);
-  }
-  .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
-
-  /* Import section */
-  .import-drop {
-    border: 2px dashed var(--border2);
-    border-radius: var(--radius-lg);
-    padding: 32px;
-    text-align: center;
-    cursor: pointer;
-    transition: border 0.15s, background 0.15s;
-    background: var(--surface);
-    margin-bottom: 20px;
-  }
-  .import-drop:hover, .import-drop.drag { border-color: var(--accent); background: var(--accent-dim); }
-  .import-drop-icon { font-size: 30px; margin-bottom: 10px; color: var(--muted); }
-  .import-drop p { color: var(--muted); font-size: 14px; }
-  .import-drop strong { color: var(--text); }
-
-  /* Category chips */
-  .chip {
-    display: inline-block;
-    padding: 2px 9px;
-    border-radius: 20px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  /* History view */
-  .history-list { display: flex; flex-direction: column; gap: 8px; }
-  .history-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-  .history-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .history-text { flex: 1; font-size: 13px; }
-  .history-time { font-size: 12px; color: var(--muted); font-family: var(--mono); }
-
-  /* Page sections */
-  .page-section { display: none; }
-  .page-section.active { display: block; }
-
-  /* Toast */
-  #toast {
-    position: fixed; bottom: 24px; right: 24px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 12px 18px;
-    font-size: 13.5px;
-    display: none;
-    z-index: 999;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }
-  #toast.show { display: block; animation: slideUp 0.2s ease; }
-  @keyframes slideUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-
-  .section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 18px;
-  }
-  .section-title { font-size: 16px; font-weight: 600; }
-
-  /* Adjust table col widths */
-  .col-sku { width: 110px; }
-  .col-qty { width: 90px; text-align: right; }
-  .col-price { width: 100px; text-align: right; }
-  .col-status { width: 100px; }
-  .col-actions { width: 100px; text-align: right; }
-  td.right { text-align: right; }
-
-  @media (max-width: 768px) {
-    .sidebar { width: 60px; }
-    .logo, .nav-item span { display: none; }
-    .main { margin-left: 60px; padding: 20px 16px; }
-    .stats-grid { grid-template-columns: repeat(2,1fr); }
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0f11;--surface:#16181c;--surface2:#1d2026;--border:#2a2d35;--border2:#353840;
+  --text:#e8eaf0;--muted:#7a7f8e;--accent:#4ade80;--accent-dim:rgba(74,222,128,0.12);
+  --accent-dim2:rgba(74,222,128,0.22);--danger:#f87171;--danger-dim:rgba(248,113,113,0.12);
+  --warn:#fbbf24;--warn-dim:rgba(251,191,36,0.12);--info:#60a5fa;--info-dim:rgba(96,165,250,0.12);
+  --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;--radius:8px;--radius-lg:14px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:fixed;top:0;left:0;z-index:10}
+.logo{font-size:18px;font-weight:700;letter-spacing:-0.5px;padding:0 20px 24px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.logo span{color:var(--accent)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;color:var(--muted);font-size:13.5px;font-weight:500;transition:all 0.15s;border-left:3px solid transparent}
+.nav-item:hover{color:var(--text);background:var(--surface2)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-dim)}
+.nav-icon{font-size:16px}
+.main{margin-left:220px;flex:1;padding:32px 36px;max-width:1100px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.page-title{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s}
+.btn:hover{background:#252830}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#0a1a0f;font-weight:600}
+.btn-primary:hover{background:#3dc76f}
+.btn-danger{border-color:var(--danger);color:var(--danger);background:var(--danger-dim)}
+.btn-danger:hover{background:rgba(248,113,113,0.2)}
+.btn-warn{border-color:var(--warn);color:var(--warn);background:var(--warn-dim)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px}
+.stat-label{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:8px;letter-spacing:0.3px}
+.stat-value{font-size:26px;font-weight:700;letter-spacing:-1px;font-family:var(--mono)}
+.stat-value.green{color:var(--accent)}.stat-value.red{color:var(--danger)}.stat-value.yellow{color:var(--warn)}
+.toolbar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-wrap input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px 8px 36px;border-radius:var(--radius);font-family:var(--sans);font-size:13.5px;outline:none;transition:border 0.15s}
+.search-wrap input:focus{border-color:var(--accent)}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
+select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--radius);font-family:var(--sans);font-size:13px;cursor:pointer;outline:none}
+select:focus{border-color:var(--accent)}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface2)}
+th{padding:11px 16px;text-align:left;font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.mono{font-family:var(--mono);font-size:13px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;font-family:var(--mono)}
+.badge-ok{background:var(--accent-dim);color:var(--accent)}
+.badge-low{background:var(--warn-dim);color:var(--warn)}
+.badge-out{background:var(--danger-dim);color:var(--danger)}
+.row-actions{display:flex;gap:6px}
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:28px 30px;width:460px;max-width:96vw;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:22px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:0.3px}
+input[type="text"],input[type="number"],input[type="date"],input[type="password"],textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:var(--radius);font-family:var(--sans);font-size:13.5px;outline:none;transition:border 0.15s;width:100%}
+input:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:36px;margin-bottom:12px;opacity:0.4}
+.chip{display:inline-block;padding:2px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted)}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:14px}
+.history-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.history-text{flex:1;font-size:13px}
+.history-time{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.page-section{display:none}
+.page-section.active{display:block}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 18px;font-size:13.5px;display:none;z-index:999;box-shadow:0 4px 24px rgba(0,0,0,0.4)}
+#toast.show{display:block;animation:slideUp 0.2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* GitHub connect banner */
+.gh-banner{display:flex;align-items:center;gap:14px;background:var(--info-dim);border:1px solid rgba(96,165,250,0.3);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:22px;font-size:13px}
+.gh-banner.connected{background:var(--accent-dim);border-color:rgba(74,222,128,0.3)}
+.gh-banner.error{background:var(--danger-dim);border-color:rgba(248,113,113,0.3)}
+.gh-status-dot{width:9px;height:9px;border-radius:50%;background:var(--info);flex-shrink:0}
+.gh-banner.connected .gh-status-dot{background:var(--accent)}
+.gh-banner.error .gh-status-dot{background:var(--danger)}
+.gh-banner-text{flex:1;color:var(--text)}
+.gh-banner-text small{display:block;color:var(--muted);font-size:12px;font-family:var(--mono);margin-top:2px}
+.sync-spinner{display:none;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+.sync-spinner.active{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Settings page */
+.settings-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:18px}
+.settings-title{font-size:15px;font-weight:600;margin-bottom:6px}
+.settings-desc{font-size:13px;color:var(--muted);margin-bottom:18px}
+.field-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field-row:last-child{margin-bottom:0}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.hint a{color:var(--info);text-decoration:none}
+.hint a:hover{text-decoration:underline}
+.divider{height:1px;background:var(--border);margin:18px 0}
+.import-drop{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:border 0.15s,background 0.15s;background:var(--surface);margin-bottom:20px}
+.import-drop:hover,.import-drop.drag{border-color:var(--accent);background:var(--accent-dim)}
+.import-drop-icon{font-size:30px;margin-bottom:10px;color:var(--muted)}
+.import-drop p{color:var(--muted);font-size:14px}
 </style>
 </head>
 <body>
-
 <div class="shell">
   <!-- Sidebar -->
   <aside class="sidebar">
@@ -389,10 +130,17 @@
       <div class="nav-item" onclick="showPage('history')" id="nav-history">
         <span class="nav-icon">📋</span><span>History</span>
       </div>
+      <div class="nav-item" onclick="showPage('settings')" id="nav-settings">
+        <span class="nav-icon">⚙️</span><span>Settings</span>
+      </div>
     </nav>
-    <div style="margin-top:auto; padding: 0 14px 8px;">
-      <button class="btn" style="width:100%; justify-content:center;" onclick="exportXLSX()">⬇ Export XLSX</button>
-      <button class="btn" style="width:100%; justify-content:center; margin-top:8px;" onclick="exportCSV()">⬇ Export CSV</button>
+    <div style="margin-top:auto;padding:0 14px 8px">
+      <button class="btn" style="width:100%;justify-content:center" onclick="syncToGitHub()">
+        <span id="sidebar-sync-spinner" class="sync-spinner"></span>
+        ↑ Sync to GitHub
+      </button>
+      <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="exportXLSX()">⬇ Export XLSX</button>
+      <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="exportCSV()">⬇ Export CSV</button>
     </div>
   </aside>
 
@@ -404,37 +152,31 @@
       <div class="topbar">
         <h1 class="page-title">Inventory</h1>
         <div class="topbar-actions">
+          <div id="sync-spinner" class="sync-spinner"></div>
+          <button class="btn" onclick="loadFromGitHub()" id="btn-pull">↓ Pull from GitHub</button>
           <button class="btn btn-primary" onclick="openModal()">＋ Add Item</button>
         </div>
       </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">TOTAL ITEMS</div>
-          <div class="stat-value" id="stat-total">0</div>
+      <div id="gh-banner" class="gh-banner">
+        <div class="gh-status-dot"></div>
+        <div class="gh-banner-text">
+          <span id="gh-banner-msg">Not connected to GitHub</span>
+          <small id="gh-banner-sub">Go to Settings to connect your repository</small>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">TOTAL VALUE</div>
-          <div class="stat-value green" id="stat-value">₱0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">LOW STOCK</div>
-          <div class="stat-value yellow" id="stat-low">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">OUT OF STOCK</div>
-          <div class="stat-value red" id="stat-out">0</div>
-        </div>
+        <button class="btn btn-sm" onclick="showPage('settings')">Configure →</button>
       </div>
-
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">TOTAL ITEMS</div><div class="stat-value" id="stat-total">0</div></div>
+        <div class="stat-card"><div class="stat-label">TOTAL VALUE</div><div class="stat-value green" id="stat-value">₱0</div></div>
+        <div class="stat-card"><div class="stat-label">LOW STOCK</div><div class="stat-value yellow" id="stat-low">0</div></div>
+        <div class="stat-card"><div class="stat-label">OUT OF STOCK</div><div class="stat-value red" id="stat-out">0</div></div>
+      </div>
       <div class="toolbar">
         <div class="search-wrap">
           <span class="search-icon">🔍</span>
           <input type="text" id="search-input" placeholder="Search by name, SKU, or category…" oninput="renderTable()">
         </div>
-        <select id="filter-cat" onchange="renderTable()">
-          <option value="">All categories</option>
-        </select>
+        <select id="filter-cat" onchange="renderTable()"><option value="">All categories</option></select>
         <select id="filter-status" onchange="renderTable()">
           <option value="">All statuses</option>
           <option value="ok">In Stock</option>
@@ -449,62 +191,57 @@
           <option value="category">Sort: Category</option>
         </select>
       </div>
-
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th class="col-sku">SKU</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th class="col-qty" style="text-align:right">Qty</th>
-              <th style="width:90px;text-align:right">Low At</th>
-              <th class="col-price" style="text-align:right">Price</th>
-              <th class="col-status">Status</th>
-              <th>Updated</th>
-              <th class="col-actions"></th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th style="width:110px">SKU</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th style="width:90px;text-align:right">Qty</th>
+            <th style="width:80px;text-align:right">Low At</th>
+            <th style="width:110px;text-align:right">Price</th>
+            <th style="width:110px">Status</th>
+            <th>Updated</th>
+            <th style="width:100px"></th>
+          </tr></thead>
           <tbody id="table-body"></tbody>
         </table>
         <div class="empty" id="empty-state" style="display:none">
           <div class="empty-icon">📦</div>
-          <p>No items found. Add your first item or import a file.</p>
+          <p>No items found. Add your first item, import a file, or pull from GitHub.</p>
         </div>
       </div>
     </div>
 
     <!-- IMPORT PAGE -->
     <div class="page-section" id="page-import">
-      <div class="topbar">
-        <h1 class="page-title">Import</h1>
-      </div>
+      <div class="topbar"><h1 class="page-title">Import</h1></div>
       <div class="import-drop" id="drop-zone" onclick="document.getElementById('file-input').click()"
            ondragover="event.preventDefault();this.classList.add('drag')"
            ondragleave="this.classList.remove('drag')"
            ondrop="handleDrop(event)">
         <div class="import-drop-icon">📄</div>
         <p><strong>Click to upload</strong> or drag & drop</p>
-        <p style="font-size:12px;margin-top:6px;">Supports .xlsx, .xls, .csv</p>
+        <p style="font-size:12px;margin-top:6px">Supports .xlsx, .xls, .csv</p>
         <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileInput(event)">
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;">
-        <div class="section-title" style="margin-bottom:14px">Expected columns</div>
-        <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Your spreadsheet should have these columns (header row on row 1):</p>
-        <table style="width:100%;border-collapse:collapse;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px">
+        <div style="font-size:15px;font-weight:600;margin-bottom:14px">Expected columns</div>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:12px">Your spreadsheet header row should use these column names:</p>
+        <table style="width:100%;border-collapse:collapse">
           <thead><tr style="background:var(--surface2)">
-            <th style="text-align:left;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);">Column</th>
-            <th style="text-align:left;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);">Required</th>
-            <th style="text-align:left;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);">Notes</th>
+            <th style="text-align:left;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border)">Column</th>
+            <th style="text-align:left;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border)">Required</th>
+            <th style="text-align:left;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border)">Notes</th>
           </tr></thead>
           <tbody>
-            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px;">SKU</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--accent)">Required</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Unique identifier</td></tr>
-            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px;">Name</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--accent)">Required</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Product name</td></tr>
-            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px;">Category</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Optional</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Product category</td></tr>
-            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px;">Quantity</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--accent)">Required</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Current stock count</td></tr>
-            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px;">LowStockAt</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Optional</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Threshold for low stock alert</td></tr>
-            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px;">Price</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Optional</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Unit price</td></tr>
-            <tr><td style="padding:8px 12px;font-family:var(--mono);font-size:13px;">Notes</td><td style="padding:8px 12px;color:var(--muted)">Optional</td><td style="padding:8px 12px;color:var(--muted)">Any notes</td></tr>
+            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px">SKU</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--accent)">Required</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Unique identifier</td></tr>
+            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px">Name</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--accent)">Required</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Product name</td></tr>
+            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px">Category</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Optional</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Product category</td></tr>
+            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px">Quantity</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--accent)">Required</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Current stock count</td></tr>
+            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px">LowStockAt</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Optional</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Threshold for low-stock alert (default: 5)</td></tr>
+            <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px">Price</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Optional</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Unit price</td></tr>
+            <tr><td style="padding:8px 12px;font-family:var(--mono);font-size:13px">Notes</td><td style="padding:8px 12px;color:var(--muted)">Optional</td><td style="padding:8px 12px;color:var(--muted)">Any notes</td></tr>
           </tbody>
         </table>
       </div>
@@ -516,10 +253,45 @@
         <h1 class="page-title">Activity Log</h1>
         <button class="btn btn-sm btn-danger" onclick="clearHistory()">Clear log</button>
       </div>
-      <div id="history-list" class="history-list">
-        <div class="empty">
-          <div class="empty-icon">📋</div>
-          <p>No activity yet.</p>
+      <div id="history-list" class="history-list"></div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page-section" id="page-settings">
+      <div class="topbar"><h1 class="page-title">Settings</h1></div>
+      <div class="settings-card">
+        <div class="settings-title">🔗 GitHub Repository</div>
+        <div class="settings-desc">Connect Stockwise to your GitHub repo. Inventory will be saved as <code style="font-family:var(--mono);font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:4px">inventory.json</code> and <code style="font-family:var(--mono);font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:4px">inventory.csv</code> in the path you specify.</div>
+        <div class="field-row">
+          <label>GitHub Personal Access Token (PAT)</label>
+          <input type="password" id="s-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+          <div class="hint">Needs <strong>repo</strong> scope. <a href="https://github.com/settings/tokens/new?scopes=repo&description=Stockwise" target="_blank">Create one here →</a></div>
+        </div>
+        <div class="field-row">
+          <label>Repository (owner/repo)</label>
+          <input type="text" id="s-repo" placeholder="e.g. yourname/my-inventory">
+        </div>
+        <div class="field-row">
+          <label>Branch</label>
+          <input type="text" id="s-branch" placeholder="main">
+        </div>
+        <div class="field-row">
+          <label>Data folder path (optional)</label>
+          <input type="text" id="s-path" placeholder="data  (leave blank to save in root)">
+          <div class="hint">Files will be saved as <span style="font-family:var(--mono);font-size:12px">{path}/inventory.json</span> and <span style="font-family:var(--mono);font-size:12px">{path}/inventory.csv</span></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+          <button class="btn" onclick="testConnection()">Test Connection</button>
+          <button class="btn btn-danger btn-sm" onclick="clearSettings()">Disconnect</button>
+        </div>
+        <div id="conn-result" style="margin-top:14px;font-size:13px;display:none"></div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-title">🗂 Data Management</div>
+        <div class="settings-desc">Danger zone — these actions cannot be undone.</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-danger btn-sm" onclick="clearAllData()">Clear all inventory data</button>
         </div>
       </div>
     </div>
@@ -532,38 +304,14 @@
   <div class="modal">
     <div class="modal-title" id="modal-title">Add Item</div>
     <div class="form-grid">
-      <div class="form-group">
-        <label>SKU *</label>
-        <input type="text" id="f-sku" placeholder="e.g. PROD-001">
-      </div>
-      <div class="form-group">
-        <label>Category</label>
-        <input type="text" id="f-cat" placeholder="e.g. Electronics">
-      </div>
-      <div class="form-group full">
-        <label>Product Name *</label>
-        <input type="text" id="f-name" placeholder="Product name">
-      </div>
-      <div class="form-group">
-        <label>Quantity *</label>
-        <input type="number" id="f-qty" min="0" placeholder="0">
-      </div>
-      <div class="form-group">
-        <label>Low Stock Alert</label>
-        <input type="number" id="f-low" min="0" placeholder="e.g. 10">
-      </div>
-      <div class="form-group">
-        <label>Unit Price (₱)</label>
-        <input type="number" id="f-price" min="0" step="0.01" placeholder="0.00">
-      </div>
-      <div class="form-group">
-        <label>Last Updated</label>
-        <input type="date" id="f-date">
-      </div>
-      <div class="form-group full">
-        <label>Notes</label>
-        <textarea id="f-notes" placeholder="Optional notes…"></textarea>
-      </div>
+      <div class="form-group"><label>SKU *</label><input type="text" id="f-sku" placeholder="e.g. PROD-001"></div>
+      <div class="form-group"><label>Category</label><input type="text" id="f-cat" placeholder="e.g. Electronics"></div>
+      <div class="form-group full"><label>Product Name *</label><input type="text" id="f-name" placeholder="Product name"></div>
+      <div class="form-group"><label>Quantity *</label><input type="number" id="f-qty" min="0" placeholder="0"></div>
+      <div class="form-group"><label>Low Stock Alert</label><input type="number" id="f-low" min="0" placeholder="e.g. 10"></div>
+      <div class="form-group"><label>Unit Price (₱)</label><input type="number" id="f-price" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label>Last Updated</label><input type="date" id="f-date"></div>
+      <div class="form-group full"><label>Notes</label><textarea id="f-notes" placeholder="Optional notes…"></textarea></div>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">Cancel</button>
@@ -572,362 +320,490 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div id="toast"></div>
 
 <script>
+/* ── State ── */
 let inventory = [];
 let activityLog = [];
 let editingId = null;
+let ghConfig = null; // { token, repo, branch, path }
 
-// Load persisted data
-function loadData() {
+/* ── Persist ── */
+function loadLocal() {
   try {
-    const saved = localStorage.getItem('stockwise_inventory');
-    if (saved) inventory = JSON.parse(saved);
-    const log = localStorage.getItem('stockwise_log');
+    const inv = localStorage.getItem('sw_inventory');
+    if (inv) inventory = JSON.parse(inv);
+    const log = localStorage.getItem('sw_log');
     if (log) activityLog = JSON.parse(log);
-  } catch(e) { inventory = []; activityLog = []; }
+    const cfg = localStorage.getItem('sw_gh_config');
+    if (cfg) ghConfig = JSON.parse(cfg);
+  } catch(e) { inventory=[]; activityLog=[]; }
+}
+function saveLocal() {
+  localStorage.setItem('sw_inventory', JSON.stringify(inventory));
+  localStorage.setItem('sw_log', JSON.stringify(activityLog));
+}
+function saveConfig(cfg) {
+  ghConfig = cfg;
+  localStorage.setItem('sw_gh_config', JSON.stringify(cfg));
 }
 
-function saveData() {
-  localStorage.setItem('stockwise_inventory', JSON.stringify(inventory));
-  localStorage.setItem('stockwise_log', JSON.stringify(activityLog));
+/* ── GitHub API helpers ── */
+function ghHeaders() {
+  return {
+    'Authorization': 'token ' + ghConfig.token,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json'
+  };
+}
+function filePath(filename) {
+  const base = (ghConfig.path||'').replace(/^\/|\/$/g,'');
+  return base ? base + '/' + filename : filename;
+}
+async function getFileSHA(filename) {
+  const url = `https://api.github.com/repos/${ghConfig.repo}/contents/${filePath(filename)}?ref=${ghConfig.branch||'main'}`;
+  const r = await fetch(url, { headers: ghHeaders() });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('GitHub API error: ' + r.status);
+  const d = await r.json();
+  return d.sha || null;
+}
+async function putFile(filename, content, message) {
+  const sha = await getFileSHA(filename);
+  const body = {
+    message,
+    content: btoa(unescape(encodeURIComponent(content))),
+    branch: ghConfig.branch || 'main'
+  };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${ghConfig.repo}/contents/${filePath(filename)}`, {
+    method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const e = await r.json();
+    throw new Error(e.message || ('GitHub write error: ' + r.status));
+  }
+  return r.json();
+}
+async function getFile(filename) {
+  const url = `https://api.github.com/repos/${ghConfig.repo}/contents/${filePath(filename)}?ref=${ghConfig.branch||'main'}`;
+  const r = await fetch(url, { headers: ghHeaders() });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('GitHub read error: ' + r.status);
+  const d = await r.json();
+  return decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))));
 }
 
-function logActivity(msg, type='info') {
-  activityLog.unshift({ msg, type, time: new Date().toISOString() });
-  if (activityLog.length > 200) activityLog.pop();
-  saveData();
-  renderHistory();
+/* ── Sync to GitHub ── */
+async function syncToGitHub() {
+  if (!ghConfig || !ghConfig.token || !ghConfig.repo) {
+    toast('Configure GitHub in Settings first', 'var(--warn)'); showPage('settings'); return;
+  }
+  setSyncing(true);
+  try {
+    const jsonStr = JSON.stringify(inventory, null, 2);
+    const csvStr  = buildCSV();
+    const ts = new Date().toISOString();
+    await putFile('inventory.json', jsonStr, `Update inventory.json — ${inventory.length} items [${ts}]`);
+    await putFile('inventory.csv',  csvStr,  `Update inventory.csv  — ${inventory.length} items [${ts}]`);
+    logActivity(`Synced ${inventory.length} items to GitHub (${ghConfig.repo})`, 'sync');
+    toast('Synced to GitHub ✓', 'var(--accent)');
+    updateBanner('connected');
+  } catch(err) {
+    toast('Sync failed: ' + err.message, 'var(--danger)');
+    logActivity('Sync failed: ' + err.message, 'error');
+  } finally { setSyncing(false); }
 }
 
-// Pages
+/* ── Pull from GitHub ── */
+async function loadFromGitHub() {
+  if (!ghConfig || !ghConfig.token || !ghConfig.repo) {
+    toast('Configure GitHub in Settings first', 'var(--warn)'); showPage('settings'); return;
+  }
+  setSyncing(true);
+  try {
+    const raw = await getFile('inventory.json');
+    if (!raw) { toast('No inventory.json found in repo yet', 'var(--warn)'); return; }
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data)) throw new Error('inventory.json is not an array');
+    inventory = data;
+    saveLocal();
+    renderTable();
+    logActivity(`Pulled ${inventory.length} items from GitHub (${ghConfig.repo})`, 'sync');
+    toast(`Pulled ${inventory.length} items from GitHub ✓`, 'var(--accent)');
+    updateBanner('connected');
+  } catch(err) {
+    toast('Pull failed: ' + err.message, 'var(--danger)');
+    logActivity('Pull failed: ' + err.message, 'error');
+  } finally { setSyncing(false); }
+}
+
+function setSyncing(on) {
+  ['sync-spinner','sidebar-sync-spinner'].forEach(id => {
+    document.getElementById(id).classList.toggle('active', on);
+  });
+  document.getElementById('btn-pull').disabled = on;
+}
+
+/* ── Settings ── */
+function loadSettingsForm() {
+  if (!ghConfig) return;
+  document.getElementById('s-token').value  = ghConfig.token  || '';
+  document.getElementById('s-repo').value   = ghConfig.repo   || '';
+  document.getElementById('s-branch').value = ghConfig.branch || '';
+  document.getElementById('s-path').value   = ghConfig.path   || '';
+}
+function saveSettings() {
+  const token  = document.getElementById('s-token').value.trim();
+  const repo   = document.getElementById('s-repo').value.trim();
+  const branch = document.getElementById('s-branch').value.trim() || 'main';
+  const path   = document.getElementById('s-path').value.trim();
+  if (!token || !repo) { toast('Token and repo are required', 'var(--danger)'); return; }
+  if (!/^[^/]+\/[^/]+$/.test(repo)) { toast('Repo must be owner/repo format', 'var(--danger)'); return; }
+  saveConfig({ token, repo, branch, path });
+  toast('Settings saved ✓', 'var(--accent)');
+  updateBanner('connected');
+}
+async function testConnection() {
+  const token  = document.getElementById('s-token').value.trim();
+  const repo   = document.getElementById('s-repo').value.trim();
+  if (!token || !repo) { toast('Fill in token and repo first', 'var(--warn)'); return; }
+  const res = document.getElementById('conn-result');
+  res.style.display = 'block';
+  res.style.color = 'var(--muted)';
+  res.textContent = 'Testing connection…';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${repo}`, {
+      headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (r.ok) {
+      const d = await r.json();
+      res.style.color = 'var(--accent)';
+      res.textContent = '✓ Connected to "' + d.full_name + '" (' + (d.private?'private':'public') + ')';
+    } else if (r.status === 404) {
+      res.style.color = 'var(--danger)';
+      res.textContent = '✗ Repository not found. Check the owner/repo value.';
+    } else if (r.status === 401) {
+      res.style.color = 'var(--danger)';
+      res.textContent = '✗ Invalid token. Check your PAT.';
+    } else {
+      res.style.color = 'var(--danger)';
+      res.textContent = '✗ Error ' + r.status;
+    }
+  } catch(e) {
+    res.style.color = 'var(--danger)';
+    res.textContent = '✗ Network error: ' + e.message;
+  }
+}
+function clearSettings() {
+  if (!confirm('Disconnect from GitHub? Credentials will be removed from browser.')) return;
+  localStorage.removeItem('sw_gh_config');
+  ghConfig = null;
+  ['s-token','s-repo','s-branch','s-path'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('conn-result').style.display = 'none';
+  updateBanner('disconnected');
+  toast('Disconnected from GitHub');
+}
+
+/* ── Banner ── */
+function updateBanner(state) {
+  const el  = document.getElementById('gh-banner');
+  const msg = document.getElementById('gh-banner-msg');
+  const sub = document.getElementById('gh-banner-sub');
+  el.className = 'gh-banner';
+  if (state === 'connected' && ghConfig) {
+    el.classList.add('connected');
+    msg.textContent = 'Connected to ' + ghConfig.repo;
+    sub.textContent = 'Branch: ' + (ghConfig.branch||'main') + (ghConfig.path ? ' · Path: '+ghConfig.path : '');
+    document.querySelector('#gh-banner button').textContent = 'Settings →';
+  } else if (state === 'error') {
+    el.classList.add('error');
+    msg.textContent = 'GitHub connection error';
+    sub.textContent = 'Check your settings';
+  } else {
+    msg.textContent = 'Not connected to GitHub';
+    sub.textContent = 'Go to Settings to connect your repository';
+    document.querySelector('#gh-banner button').textContent = 'Configure →';
+  }
+}
+
+/* ── Pages ── */
 function showPage(page) {
   document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.getElementById('nav-' + page).classList.add('active');
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nav-'+page).classList.add('active');
+  if (page === 'settings') loadSettingsForm();
+  if (page === 'history') renderHistory();
 }
 
-// Toast
+/* ── Toast ── */
 function toast(msg, color) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.style.borderColor = color || 'var(--border2)';
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2400);
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-// Stats
+/* ── Stats ── */
 function updateStats() {
   const total = inventory.length;
-  const value = inventory.reduce((s, i) => s + (parseFloat(i.price)||0) * (parseInt(i.qty)||0), 0);
-  const low = inventory.filter(i => getStatus(i) === 'low').length;
-  const out = inventory.filter(i => getStatus(i) === 'out').length;
+  const value = inventory.reduce((s,i) => s+(parseFloat(i.price)||0)*(parseInt(i.qty)||0), 0);
+  const low   = inventory.filter(i => getStatus(i)==='low').length;
+  const out   = inventory.filter(i => getStatus(i)==='out').length;
   document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-value').textContent = '₱' + value.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
-  document.getElementById('stat-low').textContent = low;
-  document.getElementById('stat-out').textContent = out;
+  document.getElementById('stat-value').textContent = '₱'+value.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('stat-low').textContent   = low;
+  document.getElementById('stat-out').textContent   = out;
 }
-
 function getStatus(item) {
-  const q = parseInt(item.qty) || 0;
-  const l = parseInt(item.low) || 5;
-  if (q === 0) return 'out';
-  if (q <= l) return 'low';
-  return 'ok';
+  const q = parseInt(item.qty)||0, l = parseInt(item.low)||5;
+  return q===0?'out':q<=l?'low':'ok';
 }
-
 function statusBadge(item) {
   const s = getStatus(item);
-  if (s === 'ok') return '<span class="badge badge-ok">In Stock</span>';
-  if (s === 'low') return '<span class="badge badge-low">Low Stock</span>';
-  return '<span class="badge badge-out">Out of Stock</span>';
+  return s==='ok'?'<span class="badge badge-ok">In Stock</span>':
+         s==='low'?'<span class="badge badge-low">Low Stock</span>':
+         '<span class="badge badge-out">Out of Stock</span>';
 }
 
-// Categories filter
+/* ── Category filter ── */
 function updateCategoryFilter() {
-  const cats = [...new Set(inventory.map(i => i.category).filter(Boolean))].sort();
+  const cats = [...new Set(inventory.map(i=>i.category).filter(Boolean))].sort();
   const sel = document.getElementById('filter-cat');
   const cur = sel.value;
-  sel.innerHTML = '<option value="">All categories</option>' +
-    cats.map(c => `<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+  sel.innerHTML = '<option value="">All categories</option>'+cats.map(c=>`<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
 }
 
-// Render table
+/* ── Render table ── */
 function renderTable() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const cat = document.getElementById('filter-cat').value;
+  const q      = document.getElementById('search-input').value.toLowerCase();
+  const cat    = document.getElementById('filter-cat').value;
   const status = document.getElementById('filter-status').value;
-  const sort = document.getElementById('sort-by').value;
-
+  const sort   = document.getElementById('sort-by').value;
   let items = inventory.filter(i => {
-    const match = !q || i.name.toLowerCase().includes(q) || (i.sku||'').toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q);
-    const catMatch = !cat || i.category === cat;
-    const statusMatch = !status || getStatus(i) === status;
-    return match && catMatch && statusMatch;
+    const m = !q||(i.name||'').toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.category||'').toLowerCase().includes(q);
+    return m && (!cat||i.category===cat) && (!status||getStatus(i)===status);
   });
-
-  items.sort((a, b) => {
-    if (sort === 'qty') return (parseInt(b.qty)||0) - (parseInt(a.qty)||0);
-    if (sort === 'price') return (parseFloat(b.price)||0) - (parseFloat(a.price)||0);
-    return (a[sort==='sku'?'sku':sort==='category'?'category':'name']||'').localeCompare(b[sort==='sku'?'sku':sort==='category'?'category':'name']||'');
+  items.sort((a,b) => {
+    if (sort==='qty')   return (parseInt(b.qty)||0)-(parseInt(a.qty)||0);
+    if (sort==='price') return (parseFloat(b.price)||0)-(parseFloat(a.price)||0);
+    const k = sort==='sku'?'sku':sort==='category'?'category':'name';
+    return (a[k]||'').localeCompare(b[k]||'');
   });
-
   const tbody = document.getElementById('table-body');
   const empty = document.getElementById('empty-state');
-
-  if (items.length === 0) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
-  } else {
-    empty.style.display = 'none';
-    tbody.innerHTML = items.map(item => `
+  if (!items.length) { tbody.innerHTML=''; empty.style.display='block'; }
+  else {
+    empty.style.display='none';
+    tbody.innerHTML = items.map(item=>`
       <tr>
         <td class="mono">${esc(item.sku||'—')}</td>
         <td><strong style="font-size:13.5px">${esc(item.name)}</strong>${item.notes?`<br><span style="font-size:12px;color:var(--muted)">${esc(item.notes.substring(0,60))}${item.notes.length>60?'…':''}</span>`:''}</td>
         <td>${item.category?`<span class="chip">${esc(item.category)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-        <td class="mono right">${parseInt(item.qty)||0}</td>
-        <td class="mono right" style="color:var(--muted)">${parseInt(item.low)||5}</td>
-        <td class="mono right">${item.price?'₱'+(parseFloat(item.price)).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+        <td class="mono" style="text-align:right">${parseInt(item.qty)||0}</td>
+        <td class="mono" style="text-align:right;color:var(--muted)">${parseInt(item.low)||5}</td>
+        <td class="mono" style="text-align:right">${item.price?'₱'+(parseFloat(item.price)).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
         <td>${statusBadge(item)}</td>
         <td style="color:var(--muted);font-size:12px;font-family:var(--mono)">${item.date||'—'}</td>
-        <td>
-          <div class="row-actions" style="justify-content:flex-end">
-            <button class="btn btn-sm" onclick="editItem('${item.id}')">✏</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteItem('${item.id}')">✕</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
+        <td><div class="row-actions" style="justify-content:flex-end">
+          <button class="btn btn-sm" onclick="editItem('${item.id}')">✏</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteItem('${item.id}')">✕</button>
+        </div></td>
+      </tr>`).join('');
   }
-
   updateStats();
   updateCategoryFilter();
 }
 
-// Modal
+/* ── Modal ── */
 function openModal(id) {
-  editingId = id || null;
-  document.getElementById('modal-title').textContent = id ? 'Edit Item' : 'Add Item';
+  editingId = id||null;
+  document.getElementById('modal-title').textContent = id?'Edit Item':'Add Item';
   if (id) {
-    const item = inventory.find(i => i.id === id);
-    document.getElementById('f-sku').value = item.sku||'';
-    document.getElementById('f-name').value = item.name||'';
-    document.getElementById('f-cat').value = item.category||'';
-    document.getElementById('f-qty').value = item.qty||'';
-    document.getElementById('f-low').value = item.low||'';
+    const item = inventory.find(i=>i.id===id);
+    document.getElementById('f-sku').value   = item.sku||'';
+    document.getElementById('f-name').value  = item.name||'';
+    document.getElementById('f-cat').value   = item.category||'';
+    document.getElementById('f-qty').value   = item.qty||'';
+    document.getElementById('f-low').value   = item.low||'';
     document.getElementById('f-price').value = item.price||'';
-    document.getElementById('f-date').value = item.date||'';
+    document.getElementById('f-date').value  = item.date||'';
     document.getElementById('f-notes').value = item.notes||'';
   } else {
-    ['f-sku','f-name','f-cat','f-qty','f-low','f-price','f-notes'].forEach(id => document.getElementById(id).value = '');
+    ['f-sku','f-name','f-cat','f-qty','f-low','f-price','f-notes'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
   }
   document.getElementById('modal').classList.add('open');
 }
-
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
-  editingId = null;
-}
-
+function closeModal() { document.getElementById('modal').classList.remove('open'); editingId=null; }
 function saveItem() {
   const name = document.getElementById('f-name').value.trim();
-  const qty = document.getElementById('f-qty').value.trim();
-  if (!name) { toast('Name is required', 'var(--danger)'); return; }
-  if (qty === '') { toast('Quantity is required', 'var(--danger)'); return; }
-
+  const qty  = document.getElementById('f-qty').value.trim();
+  if (!name) { toast('Name is required','var(--danger)'); return; }
+  if (qty==='') { toast('Quantity is required','var(--danger)'); return; }
   const sku = document.getElementById('f-sku').value.trim();
-  if (sku && !editingId && inventory.some(i => i.sku === sku)) {
-    toast('SKU already exists', 'var(--danger)'); return;
-  }
-
+  if (sku && !editingId && inventory.some(i=>i.sku===sku)) { toast('SKU already exists','var(--danger)'); return; }
   const item = {
-    id: editingId || Date.now().toString(36) + Math.random().toString(36).substr(2,5),
+    id: editingId || (Date.now().toString(36)+Math.random().toString(36).substr(2,5)),
     sku, name,
     category: document.getElementById('f-cat').value.trim(),
-    qty: parseInt(document.getElementById('f-qty').value)||0,
-    low: parseInt(document.getElementById('f-low').value)||5,
+    qty:   parseInt(document.getElementById('f-qty').value)||0,
+    low:   parseInt(document.getElementById('f-low').value)||5,
     price: parseFloat(document.getElementById('f-price').value)||0,
-    date: document.getElementById('f-date').value,
+    date:  document.getElementById('f-date').value,
     notes: document.getElementById('f-notes').value.trim()
   };
-
   if (editingId) {
-    const idx = inventory.findIndex(i => i.id === editingId);
-    const old = inventory[idx];
-    inventory[idx] = item;
-    logActivity(`Updated "${name}" (qty: ${old.qty}→${item.qty})`, 'edit');
-    toast('Item updated ✓', 'var(--accent)');
+    const idx=inventory.findIndex(i=>i.id===editingId), old=inventory[idx];
+    inventory[idx]=item;
+    logActivity(`Updated "${name}" (qty: ${old.qty}→${item.qty})`,'edit');
+    toast('Item updated ✓','var(--accent)');
   } else {
     inventory.push(item);
-    logActivity(`Added "${name}" (qty: ${item.qty})`, 'add');
-    toast('Item added ✓', 'var(--accent)');
+    logActivity(`Added "${name}" (qty: ${item.qty})`,'add');
+    toast('Item added ✓','var(--accent)');
   }
-
-  saveData();
-  closeModal();
-  renderTable();
+  saveLocal(); closeModal(); renderTable();
 }
-
 function editItem(id) { openModal(id); }
-
 function deleteItem(id) {
-  const item = inventory.find(i => i.id === id);
+  const item=inventory.find(i=>i.id===id);
   if (!confirm(`Delete "${item.name}"?`)) return;
-  inventory = inventory.filter(i => i.id !== id);
-  logActivity(`Deleted "${item.name}"`, 'delete');
-  saveData();
-  renderTable();
-  toast('Item deleted', 'var(--danger)');
+  inventory=inventory.filter(i=>i.id!==id);
+  logActivity(`Deleted "${item.name}"`,'delete');
+  saveLocal(); renderTable();
+  toast('Item deleted','var(--danger)');
 }
 
-// History
+/* ── History ── */
+function logActivity(msg, type='info') {
+  activityLog.unshift({msg,type,time:new Date().toISOString()});
+  if (activityLog.length>300) activityLog.pop();
+  saveLocal();
+}
 function renderHistory() {
-  const el = document.getElementById('history-list');
+  const el=document.getElementById('history-list');
   if (!activityLog.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>No activity yet.</p></div>';
-    return;
+    el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><p>No activity yet.</p></div>'; return;
   }
-  const colors = { add:'var(--accent)', edit:'var(--info)', delete:'var(--danger)', import:'var(--warn)', info:'var(--muted)' };
-  el.innerHTML = activityLog.slice(0,100).map(e => `
+  const colors={add:'var(--accent)',edit:'var(--info)',delete:'var(--danger)',sync:'var(--warn)',error:'var(--danger)',import:'var(--warn)',info:'var(--muted)'};
+  el.innerHTML=activityLog.slice(0,100).map(e=>`
     <div class="history-item">
       <div class="history-dot" style="background:${colors[e.type]||colors.info}"></div>
       <div class="history-text">${esc(e.msg)}</div>
       <div class="history-time">${new Date(e.time).toLocaleString()}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
-
 function clearHistory() {
   if (!confirm('Clear all activity log?')) return;
-  activityLog = [];
-  saveData();
-  renderHistory();
-  toast('Log cleared');
+  activityLog=[]; saveLocal(); renderHistory(); toast('Log cleared');
 }
 
-// Import
+/* ── Import ── */
 function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('drop-zone').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file) processFile(file);
+  e.preventDefault(); document.getElementById('drop-zone').classList.remove('drag');
+  const file=e.dataTransfer.files[0]; if (file) processFile(file);
 }
-function handleFileInput(e) {
-  const file = e.target.files[0];
-  if (file) processFile(file);
-}
+function handleFileInput(e) { const file=e.target.files[0]; if (file) processFile(file); }
 function processFile(file) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
+  const reader=new FileReader();
+  reader.onload=function(e) {
     try {
-      const wb = XLSX.read(e.target.result, { type: 'binary' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      let imported = 0;
-      rows.forEach(row => {
-        const name = row.Name || row.name || row.PRODUCT || row.Product || '';
-        const qty = row.Quantity || row.quantity || row.QTY || row.qty || 0;
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      let imported=0;
+      rows.forEach(row=>{
+        const name=row.Name||row.name||row.PRODUCT||row.Product||'';
         if (!name) return;
-        const item = {
-          id: Date.now().toString(36) + Math.random().toString(36).substr(2,5),
-          sku: String(row.SKU || row.sku || ''),
-          name: String(name),
-          category: String(row.Category || row.category || ''),
-          qty: parseInt(qty)||0,
-          low: parseInt(row.LowStockAt || row.LowStock || row.low || 5)||5,
-          price: parseFloat(row.Price || row.price || 0)||0,
-          date: row.Date || row.date || new Date().toISOString().split('T')[0],
-          notes: String(row.Notes || row.notes || '')
+        const item={
+          id: Date.now().toString(36)+Math.random().toString(36).substr(2,5),
+          sku:      String(row.SKU||row.sku||''),
+          name:     String(name),
+          category: String(row.Category||row.category||''),
+          qty:      parseInt(row.Quantity||row.quantity||row.QTY||0)||0,
+          low:      parseInt(row.LowStockAt||row.LowStock||row.low||5)||5,
+          price:    parseFloat(row.Price||row.price||0)||0,
+          date:     row.Date||row.date||new Date().toISOString().split('T')[0],
+          notes:    String(row.Notes||row.notes||'')
         };
-        const existing = item.sku ? inventory.find(i => i.sku === item.sku) : null;
-        if (existing) {
-          Object.assign(existing, item, { id: existing.id });
-        } else {
-          inventory.push(item);
-        }
+        const existing=item.sku?inventory.find(i=>i.sku===item.sku):null;
+        if (existing) Object.assign(existing,item,{id:existing.id});
+        else inventory.push(item);
         imported++;
       });
-      saveData();
-      renderTable();
-      logActivity(`Imported ${imported} items from "${file.name}"`, 'import');
-      toast(`Imported ${imported} items ✓`, 'var(--accent)');
+      saveLocal(); renderTable();
+      logActivity(`Imported ${imported} items from "${file.name}"`,'import');
+      toast(`Imported ${imported} items ✓`,'var(--accent)');
       showPage('inventory');
-    } catch(err) {
-      toast('Error reading file: ' + err.message, 'var(--danger)');
-    }
+    } catch(err) { toast('Error reading file: '+err.message,'var(--danger)'); }
   };
   reader.readAsBinaryString(file);
 }
 
-// Export XLSX
-function exportXLSX() {
-  if (!inventory.length) { toast('No items to export', 'var(--warn)'); return; }
-  const data = inventory.map(i => ({
-    SKU: i.sku||'',
-    Name: i.name||'',
-    Category: i.category||'',
-    Quantity: parseInt(i.qty)||0,
-    LowStockAt: parseInt(i.low)||5,
-    Price: parseFloat(i.price)||0,
-    Status: getStatus(i) === 'ok' ? 'In Stock' : getStatus(i) === 'low' ? 'Low Stock' : 'Out of Stock',
-    Notes: i.notes||'',
-    LastUpdated: i.date||''
-  }));
-  const ws = XLSX.utils.json_to_sheet(data);
-  ws['!cols'] = [12,30,16,10,10,12,12,30,14].map(w=>({wch:w}));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
-  XLSX.writeFile(wb, 'inventory_' + new Date().toISOString().split('T')[0] + '.xlsx');
-  logActivity(`Exported ${inventory.length} items as XLSX`, 'info');
-  toast('XLSX exported ✓', 'var(--accent)');
-}
-
-// Export CSV
-function exportCSV() {
-  if (!inventory.length) { toast('No items to export', 'var(--warn)'); return; }
-  const headers = ['SKU','Name','Category','Quantity','LowStockAt','Price','Status','Notes','LastUpdated'];
-  const rows = inventory.map(i => [
-    i.sku||'', i.name||'', i.category||'',
-    parseInt(i.qty)||0, parseInt(i.low)||5, parseFloat(i.price)||0,
+/* ── Export ── */
+function buildCSV() {
+  const headers=['SKU','Name','Category','Quantity','LowStockAt','Price','Status','Notes','LastUpdated'];
+  const rows=inventory.map(i=>[
+    i.sku||'',i.name||'',i.category||'',
+    parseInt(i.qty)||0,parseInt(i.low)||5,parseFloat(i.price)||0,
     getStatus(i)==='ok'?'In Stock':getStatus(i)==='low'?'Low Stock':'Out of Stock',
-    (i.notes||'').replace(/,/g,';'), i.date||''
-  ]);
-  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'inventory_' + new Date().toISOString().split('T')[0] + '.csv';
+    (i.notes||'').replace(/"/g,'""'),i.date||''
+  ].map(v=>typeof v==='string'&&(v.includes(',')||v.includes('"'))?`"${v}"`:v));
+  return [headers,...rows].map(r=>r.join(',')).join('\n');
+}
+function exportXLSX() {
+  if (!inventory.length){toast('No items to export','var(--warn)');return}
+  const data=inventory.map(i=>({
+    SKU:i.sku||'',Name:i.name||'',Category:i.category||'',
+    Quantity:parseInt(i.qty)||0,LowStockAt:parseInt(i.low)||5,Price:parseFloat(i.price)||0,
+    Status:getStatus(i)==='ok'?'In Stock':getStatus(i)==='low'?'Low Stock':'Out of Stock',
+    Notes:i.notes||'',LastUpdated:i.date||''
+  }));
+  const ws=XLSX.utils.json_to_sheet(data);
+  ws['!cols']=[12,30,16,10,10,12,12,30,14].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Inventory');
+  XLSX.writeFile(wb,'inventory_'+new Date().toISOString().split('T')[0]+'.xlsx');
+  logActivity(`Downloaded ${inventory.length} items as XLSX`,'info');
+  toast('XLSX downloaded ✓','var(--accent)');
+}
+function exportCSV() {
+  if (!inventory.length){toast('No items to export','var(--warn)');return}
+  const blob=new Blob([buildCSV()],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='inventory_'+new Date().toISOString().split('T')[0]+'.csv';
   a.click();
-  logActivity(`Exported ${inventory.length} items as CSV`, 'info');
-  toast('CSV exported ✓', 'var(--accent)');
+  logActivity(`Downloaded ${inventory.length} items as CSV`,'info');
+  toast('CSV downloaded ✓','var(--accent)');
 }
 
-// Escape HTML
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function clearAllData() {
+  if (!confirm('Delete ALL inventory data? This cannot be undone.')) return;
+  inventory=[]; saveLocal(); renderTable();
+  toast('All data cleared','var(--danger)');
 }
 
-// Close modal on overlay click
-document.getElementById('modal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
+/* ── Escape HTML ── */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+/* ── Keyboard ── */
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+document.addEventListener('keydown',e=>{
+  if (e.key==='n'&&!document.querySelector('.modal-overlay.open')&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA') openModal();
+  if (e.key==='Escape') closeModal();
 });
 
-// Keyboard shortcut: N to add
-document.addEventListener('keydown', e => {
-  if (e.key === 'n' && !document.querySelector('.modal-overlay.open') && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-    openModal();
-  }
-  if (e.key === 'Escape') closeModal();
-});
-
-// Init
-loadData();
+/* ── Init ── */
+loadLocal();
 renderTable();
 renderHistory();
+updateBanner(ghConfig ? 'connected' : 'disconnected');
 </script>
 </body>
 </html>
