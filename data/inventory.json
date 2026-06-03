@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "id": "mpxw7lo7mh1uw",
+    "sku": "test 1",
+    "name": "1/4 JIC Straight",
+    "category": "Fittings",
+    "qty": 57,
+    "low": 10,
+    "price": 200,
+    "date": "2026-06-03",
+    "notes": ""
+  }
+]
