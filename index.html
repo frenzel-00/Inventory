@@ -285,7 +285,7 @@ textarea{resize:vertical;min-height:70px}
           <div style="flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px">
             <div style="font-size:13px;font-weight:600;margin-bottom:6px">↑ Sync to GitHub</div>
             <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Writes your current local inventory to the repo as <span style="font-family:var(--mono)">inventory.json</span> and <span style="font-family:var(--mono)">inventory.csv</span>.</div>
-            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="syncToGitHub()">
+            <button class="btn btn-primary" id="btn-sync" style="width:100%;justify-content:center" onclick="syncToGitHub()">
               <span id="sidebar-sync-spinner" class="sync-spinner"></span>
               ↑ Sync now
             </button>
@@ -565,7 +565,10 @@ async function doPull() {
 function setSyncing(on) {
   const spinner = document.getElementById('sidebar-sync-spinner');
   if (spinner) spinner.classList.toggle('active', on);
-  document.getElementById('btn-pull').disabled = on;
+  const btnPull = document.getElementById('btn-pull');
+  if (btnPull) btnPull.disabled = on;
+  const btnSync = document.getElementById('btn-sync');
+  if (btnSync) btnSync.disabled = on;
 }
 
 /* ── Version History ── */
