@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trece Martires — InvManager</title>
+<title>Stockwise — Inventory Manager</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -127,7 +127,7 @@ textarea{resize:vertical;min-height:70px}
 <div class="shell">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="logo">Fren<span>zel</span></div>
+    <div class="logo">Stock<span>wise</span></div>
     <nav>
       <div class="nav-item active" onclick="showPage('inventory')" id="nav-inventory">
         <span class="nav-icon">📦</span><span>Inventory</span>
@@ -601,13 +601,16 @@ async function openVersionHistory() {
       const msg    = esc(c.commit.message.split('\n')[0].substring(0, 80));
       const author = esc(c.commit.author.name);
       const badge  = i === 0 ? '<span style="background:var(--accent-dim);color:var(--accent);font-size:11px;padding:1px 7px;border-radius:20px;font-weight:600;margin-left:6px">latest</span>' : '';
-      return `<div class="vh-commit" data-sha="${c.sha}" onclick="previewCommit('${c.sha}','${sha}',${JSON.stringify(msg)},${JSON.stringify(date)},${JSON.stringify(author)})" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:border 0.15s;margin-bottom:8px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-          <span style="font-family:var(--mono);font-size:12px;color:var(--accent)">${sha}</span>${badge}
-          <span style="font-size:12px;color:var(--muted);margin-left:auto;font-family:var(--mono)">${date}</span>
+      return `<div class="vh-commit" data-sha="${c.sha}" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;transition:border 0.15s;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+            <span style="font-family:var(--mono);font-size:12px;color:var(--accent)">${sha}</span>${badge}
+            <span style="font-size:12px;color:var(--muted);margin-left:auto;font-family:var(--mono);white-space:nowrap">${date}</span>
+          </div>
+          <div style="font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${msg}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">by ${author}</div>
         </div>
-        <div style="font-size:13px;color:var(--text)">${msg}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:3px">by ${author}</div>
+        <button class="btn btn-sm btn-primary" style="flex-shrink:0;white-space:nowrap" onclick="previewCommit('${c.sha}','${sha}',${JSON.stringify(msg)},${JSON.stringify(date)},${JSON.stringify(author)})">Select →</button>
       </div>`;
     }).join('');
     list.querySelectorAll('.vh-commit').forEach(el => {
@@ -625,9 +628,13 @@ async function openVersionHistory() {
 }
 
 async function previewCommit(sha, shaShort, msg, date, author) {
+  // highlight selected row and update button labels
   document.querySelectorAll('.vh-commit').forEach(el => {
-    el.style.borderColor = el.dataset.sha === sha ? 'var(--accent)' : 'var(--border)';
-    el.classList.toggle('selected', el.dataset.sha === sha);
+    const isSelected = el.dataset.sha === sha;
+    el.style.borderColor = isSelected ? 'var(--accent)' : 'var(--border)';
+    el.classList.toggle('selected', isSelected);
+    const btn = el.querySelector('button');
+    if (btn) btn.textContent = isSelected ? '✓ Selected' : 'Select →';
   });
   _selectedCommit = sha;
   const preview = document.getElementById('vh-preview');
@@ -663,6 +670,8 @@ function clearVersionPreview() {
   document.querySelectorAll('.vh-commit').forEach(el => {
     el.style.borderColor = 'var(--border)';
     el.classList.remove('selected');
+    const btn = el.querySelector('button');
+    if (btn) btn.textContent = 'Select →';
   });
 }
 
