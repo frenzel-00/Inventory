@@ -113,6 +113,14 @@ textarea{resize:vertical;min-height:70px}
 .import-drop:hover,.import-drop.drag{border-color:var(--accent);background:var(--accent-dim)}
 .import-drop-icon{font-size:30px;margin-bottom:10px;color:var(--muted)}
 .import-drop p{color:var(--muted);font-size:14px}
+/* Confirm modal */
+.confirm-modal{width:400px;max-width:96vw}
+.confirm-icon{font-size:32px;margin-bottom:14px}
+.confirm-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.confirm-body{font-size:13.5px;color:var(--muted);line-height:1.7;margin-bottom:6px}
+.confirm-detail{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin:14px 0;font-size:12.5px;font-family:var(--mono);color:var(--text);line-height:1.8}
+.confirm-detail span{color:var(--muted)}
+.confirm-warn{background:var(--warn-dim);border:1px solid rgba(251,191,36,0.3);border-radius:var(--radius);padding:10px 14px;font-size:12.5px;color:var(--warn);margin-top:10px}
 </style>
 </head>
 <body>
@@ -134,14 +142,7 @@ textarea{resize:vertical;min-height:70px}
         <span class="nav-icon">⚙️</span><span>Settings</span>
       </div>
     </nav>
-    <div style="margin-top:auto;padding:0 14px 8px">
-      <button class="btn" style="width:100%;justify-content:center" onclick="syncToGitHub()">
-        <span id="sidebar-sync-spinner" class="sync-spinner"></span>
-        ↑ Sync to GitHub
-      </button>
-      <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="exportXLSX()">⬇ Export XLSX</button>
-      <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="exportCSV()">⬇ Export CSV</button>
-    </div>
+
   </aside>
 
   <!-- Main -->
@@ -152,18 +153,8 @@ textarea{resize:vertical;min-height:70px}
       <div class="topbar">
         <h1 class="page-title">Inventory</h1>
         <div class="topbar-actions">
-          <div id="sync-spinner" class="sync-spinner"></div>
-          <button class="btn" onclick="loadFromGitHub()" id="btn-pull">↓ Pull from GitHub</button>
           <button class="btn btn-primary" onclick="openModal()">＋ Add Item</button>
         </div>
-      </div>
-      <div id="gh-banner" class="gh-banner">
-        <div class="gh-status-dot"></div>
-        <div class="gh-banner-text">
-          <span id="gh-banner-msg">Not connected to GitHub</span>
-          <small id="gh-banner-sub">Go to Settings to connect your repository</small>
-        </div>
-        <button class="btn btn-sm" onclick="showPage('settings')">Configure →</button>
       </div>
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-label">TOTAL ITEMS</div><div class="stat-value" id="stat-total">0</div></div>
@@ -288,10 +279,46 @@ textarea{resize:vertical;min-height:70px}
         <div id="conn-result" style="margin-top:14px;font-size:13px;display:none"></div>
       </div>
       <div class="settings-card">
+        <div class="settings-title">☁️ GitHub Sync</div>
+        <div class="settings-desc">Push your local inventory to the repository, or pull the latest version from it. Always review what will happen before confirming.</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px">↑ Sync to GitHub</div>
+            <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Writes your current local inventory to the repo as <span style="font-family:var(--mono)">inventory.json</span> and <span style="font-family:var(--mono)">inventory.csv</span>.</div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="syncToGitHub()">
+              <span id="sidebar-sync-spinner" class="sync-spinner"></span>
+              ↑ Sync now
+            </button>
+          </div>
+          <div style="flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px">↓ Pull from GitHub</div>
+            <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Browse commit history and restore any saved version of <span style="font-family:var(--mono)">inventory.json</span> from the repo.</div>
+            <button class="btn" style="width:100%;justify-content:center" onclick="openVersionHistory()" id="btn-pull">🕓 Browse versions</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-title">⬇️ Export Inventory</div>
+        <div class="settings-desc">Download your current inventory as a spreadsheet or CSV file.</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px">Excel Spreadsheet</div>
+            <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Downloads a formatted <span style="font-family:var(--mono)">.xlsx</span> file you can open in Excel or Google Sheets.</div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="exportXLSX()">⬇ Export XLSX</button>
+          </div>
+          <div style="flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px">CSV File</div>
+            <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Downloads a plain <span style="font-family:var(--mono)">.csv</span> file compatible with any spreadsheet or database tool.</div>
+            <button class="btn" style="width:100%;justify-content:center" onclick="exportCSV()">⬇ Export CSV</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-card">
         <div class="settings-title">🗂 Data Management</div>
         <div class="settings-desc">Danger zone — these actions cannot be undone.</div>
         <div style="display:flex;gap:10px">
-          <button class="btn btn-danger btn-sm" onclick="clearAllData()">Clear all inventory data</button>
+          <!-- hidden: button kept in code but not shown in UI -->
+          <button class="btn btn-danger btn-sm" onclick="clearAllData()" disabled style="display:none">Clear all inventory data</button>
         </div>
       </div>
     </div>
@@ -299,7 +326,35 @@ textarea{resize:vertical;min-height:70px}
   </main>
 </div>
 
-<!-- Add/Edit Modal -->
+<!-- Version History Modal -->
+<div class="modal-overlay" id="version-modal">
+  <div class="modal" style="width:560px;max-width:96vw">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div class="modal-title" style="margin-bottom:0">🕓 Version History</div>
+      <button class="btn btn-sm" onclick="closeVersionModal()">✕ Close</button>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Select a commit to preview and restore that version of <span style="font-family:var(--mono);font-size:12px">inventory.json</span>.</div>
+    <div id="vh-loading" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">
+      <div class="sync-spinner active" style="margin:0 auto 12px;display:block"></div>
+      Loading commit history…
+    </div>
+    <div id="vh-error" style="display:none;background:var(--danger-dim);border:1px solid rgba(248,113,113,0.3);border-radius:var(--radius);padding:12px 14px;font-size:13px;color:var(--danger);margin-bottom:14px"></div>
+    <div id="vh-list" style="display:none;max-height:360px;overflow-y:auto;flex-direction:column;gap:8px"></div>
+    <div id="vh-preview" style="display:none;margin-top:14px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-size:12.5px;font-family:var(--mono);color:var(--text);line-height:1.8" id="vh-preview-detail"></div>
+      <div id="vh-preview-warn" class="confirm-warn" style="display:none;margin-top:10px"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn" onclick="clearVersionPreview()">← Back</button>
+        <button class="btn btn-primary" style="flex:1;justify-content:center" id="btn-restore" onclick="restoreVersion()">
+          <span id="restore-spinner" class="sync-spinner"></span>
+          ↓ Restore this version
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-title" id="modal-title">Add Item</div>
@@ -316,6 +371,21 @@ textarea{resize:vertical;min-height:70px}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal confirm-modal">
+    <div id="cm-icon" class="confirm-icon"></div>
+    <div id="cm-title" class="confirm-title"></div>
+    <div id="cm-body" class="confirm-body"></div>
+    <div id="cm-detail" class="confirm-detail" style="display:none"></div>
+    <div id="cm-warn" class="confirm-warn" style="display:none"></div>
+    <div class="modal-footer">
+      <button class="btn" id="cm-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn" id="cm-ok" onclick="confirmOk()">Confirm</button>
     </div>
   </div>
 </div>
@@ -395,11 +465,52 @@ async function getFile(filename) {
   return decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))));
 }
 
+/* ── Confirm Modal ── */
+let _confirmCallback = null;
+function showConfirm({ icon, title, body, detail, warn, okLabel, okClass, onOk }) {
+  document.getElementById('cm-icon').textContent = icon || '❓';
+  document.getElementById('cm-title').textContent = title || 'Are you sure?';
+  document.getElementById('cm-body').textContent = body || '';
+  const det = document.getElementById('cm-detail');
+  if (detail) { det.innerHTML = detail; det.style.display = 'block'; } else det.style.display = 'none';
+  const w = document.getElementById('cm-warn');
+  if (warn) { w.textContent = warn; w.style.display = 'block'; } else w.style.display = 'none';
+  const okBtn = document.getElementById('cm-ok');
+  okBtn.textContent = okLabel || 'Confirm';
+  okBtn.className = 'btn ' + (okClass || 'btn-primary');
+  _confirmCallback = onOk;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function closeConfirm() {
+  document.getElementById('confirm-modal').classList.remove('open');
+  _confirmCallback = null;
+}
+function confirmOk() {
+  closeConfirm();
+  if (_confirmCallback) _confirmCallback();
+}
+document.getElementById('confirm-modal').addEventListener('click', function(e) { if (e.target===this) closeConfirm(); });
+
 /* ── Sync to GitHub ── */
-async function syncToGitHub() {
+function syncToGitHub() {
   if (!ghConfig || !ghConfig.token || !ghConfig.repo) {
     toast('Configure GitHub in Settings first', 'var(--warn)'); showPage('settings'); return;
   }
+  const low = inventory.filter(i=>getStatus(i)==='low').length;
+  const out = inventory.filter(i=>getStatus(i)==='out').length;
+  const val = inventory.reduce((s,i)=>s+(parseFloat(i.price)||0)*(parseInt(i.qty)||0),0);
+  showConfirm({
+    icon: '☁️',
+    title: 'Sync inventory to GitHub?',
+    body: 'This will write your current local inventory to your repository, overwriting the existing files.',
+    detail: `<span>Repository:</span> ${esc(ghConfig.repo)}<br><span>Branch:</span> ${esc(ghConfig.branch||'main')}<br><span>Files:</span> inventory.json, inventory.csv<br><span>Items:</span> ${inventory.length} total · ${low} low stock · ${out} out of stock<br><span>Total value:</span> ₱${val.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}`,
+    warn: inventory.length === 0 ? '⚠ Your inventory is empty — this will overwrite the repo with an empty file.' : null,
+    okLabel: '↑ Sync now',
+    okClass: 'btn-primary',
+    onOk: doSync
+  });
+}
+async function doSync() {
   setSyncing(true);
   try {
     const jsonStr = JSON.stringify(inventory, null, 2);
@@ -417,10 +528,22 @@ async function syncToGitHub() {
 }
 
 /* ── Pull from GitHub ── */
-async function loadFromGitHub() {
+function loadFromGitHub() {
   if (!ghConfig || !ghConfig.token || !ghConfig.repo) {
     toast('Configure GitHub in Settings first', 'var(--warn)'); showPage('settings'); return;
   }
+  showConfirm({
+    icon: '📥',
+    title: 'Pull inventory from GitHub?',
+    body: 'This will replace your local inventory with the version stored in your repository.',
+    detail: `<span>Repository:</span> ${esc(ghConfig.repo)}<br><span>Branch:</span> ${esc(ghConfig.branch||'main')}<br><span>File:</span> inventory.json`,
+    warn: inventory.length > 0 ? `⚠ Your current local inventory (${inventory.length} item${inventory.length!==1?'s':''}) will be replaced. Make sure you've synced first if you have unsaved changes.` : null,
+    okLabel: '↓ Pull now',
+    okClass: 'btn-primary',
+    onOk: doPull
+  });
+}
+async function doPull() {
   setSyncing(true);
   try {
     const raw = await getFile('inventory.json');
@@ -440,11 +563,143 @@ async function loadFromGitHub() {
 }
 
 function setSyncing(on) {
-  ['sync-spinner','sidebar-sync-spinner'].forEach(id => {
-    document.getElementById(id).classList.toggle('active', on);
-  });
+  const spinner = document.getElementById('sidebar-sync-spinner');
+  if (spinner) spinner.classList.toggle('active', on);
   document.getElementById('btn-pull').disabled = on;
 }
+
+/* ── Version History ── */
+let _selectedCommit = null;
+
+async function openVersionHistory() {
+  if (!ghConfig || !ghConfig.token || !ghConfig.repo) {
+    toast('Configure GitHub in Settings first', 'var(--warn)'); return;
+  }
+  document.getElementById('vh-loading').style.display = 'block';
+  document.getElementById('vh-error').style.display   = 'none';
+  document.getElementById('vh-list').style.display    = 'none';
+  document.getElementById('vh-preview').style.display = 'none';
+  _selectedCommit = null;
+  document.getElementById('version-modal').classList.add('open');
+  try {
+    const fp  = filePath('inventory.json');
+    const url = `https://api.github.com/repos/${ghConfig.repo}/commits?path=${encodeURIComponent(fp)}&sha=${encodeURIComponent(ghConfig.branch||'main')}&per_page=30`;
+    const r   = await fetch(url, { headers: ghHeaders() });
+    if (!r.ok) throw new Error('GitHub API error ' + r.status);
+    const commits = await r.json();
+    document.getElementById('vh-loading').style.display = 'none';
+    if (!commits.length) {
+      const err = document.getElementById('vh-error');
+      err.style.display = 'block';
+      err.textContent   = 'No commits found for inventory.json on this branch.';
+      return;
+    }
+    const list = document.getElementById('vh-list');
+    list.innerHTML = commits.map((c, i) => {
+      const date   = new Date(c.commit.author.date).toLocaleString();
+      const sha    = c.sha.substring(0, 7);
+      const msg    = esc(c.commit.message.split('\n')[0].substring(0, 80));
+      const author = esc(c.commit.author.name);
+      const badge  = i === 0 ? '<span style="background:var(--accent-dim);color:var(--accent);font-size:11px;padding:1px 7px;border-radius:20px;font-weight:600;margin-left:6px">latest</span>' : '';
+      return `<div class="vh-commit" data-sha="${c.sha}" onclick="previewCommit('${c.sha}','${sha}',${JSON.stringify(msg)},${JSON.stringify(date)},${JSON.stringify(author)})" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:border 0.15s;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--accent)">${sha}</span>${badge}
+          <span style="font-size:12px;color:var(--muted);margin-left:auto;font-family:var(--mono)">${date}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text)">${msg}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">by ${author}</div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.vh-commit').forEach(el => {
+      el.addEventListener('mouseenter', () => { if (!el.classList.contains('selected')) el.style.borderColor = 'var(--accent)'; });
+      el.addEventListener('mouseleave', () => { if (!el.classList.contains('selected')) el.style.borderColor = 'var(--border)'; });
+    });
+    list.style.display = 'flex';
+    list.style.flexDirection = 'column';
+  } catch(err) {
+    document.getElementById('vh-loading').style.display = 'none';
+    const errEl = document.getElementById('vh-error');
+    errEl.style.display = 'block';
+    errEl.textContent   = 'Failed to load history: ' + err.message;
+  }
+}
+
+async function previewCommit(sha, shaShort, msg, date, author) {
+  document.querySelectorAll('.vh-commit').forEach(el => {
+    el.style.borderColor = el.dataset.sha === sha ? 'var(--accent)' : 'var(--border)';
+    el.classList.toggle('selected', el.dataset.sha === sha);
+  });
+  _selectedCommit = sha;
+  const preview = document.getElementById('vh-preview');
+  const detail  = document.getElementById('vh-preview-detail');
+  const warn    = document.getElementById('vh-preview-warn');
+  detail.innerHTML = `<span style="color:var(--muted)">Commit:</span> ${shaShort}<br><span style="color:var(--muted)">Message:</span> ${msg}<br><span style="color:var(--muted)">Date:</span> ${date}<br><span style="color:var(--muted)">Author:</span> ${author}<br><span style="color:var(--muted)">Items:</span> <span id="vh-item-count">fetching…</span>`;
+  warn.style.display = 'none';
+  preview.style.display = 'block';
+  document.getElementById('btn-restore').disabled = true;
+  try {
+    const fp  = filePath('inventory.json');
+    const url = `https://api.github.com/repos/${ghConfig.repo}/contents/${encodeURIComponent(fp)}?ref=${sha}`;
+    const r   = await fetch(url, { headers: ghHeaders() });
+    if (!r.ok) throw new Error('status ' + r.status);
+    const d    = await r.json();
+    const text = decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))));
+    const data = JSON.parse(text);
+    const count = Array.isArray(data) ? data.length : '?';
+    document.getElementById('vh-item-count').textContent = count + ' item' + (count !== 1 ? 's' : '');
+    if (inventory.length > 0) {
+      warn.style.display = 'block';
+      warn.textContent   = `⚠ Your current local inventory (${inventory.length} item${inventory.length!==1?'s':''}) will be replaced. Sync first if you have unsaved changes.`;
+    }
+    document.getElementById('btn-restore').disabled = false;
+  } catch(e) {
+    document.getElementById('vh-item-count').textContent = 'could not fetch (' + e.message + ')';
+  }
+}
+
+function clearVersionPreview() {
+  _selectedCommit = null;
+  document.getElementById('vh-preview').style.display = 'none';
+  document.querySelectorAll('.vh-commit').forEach(el => {
+    el.style.borderColor = 'var(--border)';
+    el.classList.remove('selected');
+  });
+}
+
+async function restoreVersion() {
+  if (!_selectedCommit) return;
+  const sha = _selectedCommit;
+  document.getElementById('restore-spinner').classList.add('active');
+  document.getElementById('btn-restore').disabled = true;
+  try {
+    const fp  = filePath('inventory.json');
+    const url = `https://api.github.com/repos/${ghConfig.repo}/contents/${encodeURIComponent(fp)}?ref=${sha}`;
+    const r   = await fetch(url, { headers: ghHeaders() });
+    if (!r.ok) throw new Error('GitHub read error ' + r.status);
+    const d    = await r.json();
+    const text = decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))));
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) throw new Error('inventory.json is not an array');
+    inventory = data;
+    saveLocal();
+    renderTable();
+    logActivity(`Restored ${inventory.length} items from commit ${sha.substring(0,7)} (${ghConfig.repo})`, 'sync');
+    toast(`Restored ${inventory.length} items from version ${sha.substring(0,7)} ✓`, 'var(--accent)');
+    closeVersionModal();
+  } catch(err) {
+    toast('Restore failed: ' + err.message, 'var(--danger)');
+    logActivity('Restore failed: ' + err.message, 'error');
+  } finally {
+    document.getElementById('restore-spinner').classList.remove('active');
+    document.getElementById('btn-restore').disabled = false;
+  }
+}
+
+function closeVersionModal() {
+  document.getElementById('version-modal').classList.remove('open');
+  _selectedCommit = null;
+}
+document.getElementById('version-modal').addEventListener('click', function(e) { if (e.target===this) closeVersionModal(); });
 
 /* ── Settings ── */
 function loadSettingsForm() {
@@ -506,27 +761,8 @@ function clearSettings() {
   toast('Disconnected from GitHub');
 }
 
-/* ── Banner ── */
-function updateBanner(state) {
-  const el  = document.getElementById('gh-banner');
-  const msg = document.getElementById('gh-banner-msg');
-  const sub = document.getElementById('gh-banner-sub');
-  el.className = 'gh-banner';
-  if (state === 'connected' && ghConfig) {
-    el.classList.add('connected');
-    msg.textContent = 'Connected to ' + ghConfig.repo;
-    sub.textContent = 'Branch: ' + (ghConfig.branch||'main') + (ghConfig.path ? ' · Path: '+ghConfig.path : '');
-    document.querySelector('#gh-banner button').textContent = 'Settings →';
-  } else if (state === 'error') {
-    el.classList.add('error');
-    msg.textContent = 'GitHub connection error';
-    sub.textContent = 'Check your settings';
-  } else {
-    msg.textContent = 'Not connected to GitHub';
-    sub.textContent = 'Go to Settings to connect your repository';
-    document.querySelector('#gh-banner button').textContent = 'Configure →';
-  }
-}
+/* ── Banner (removed from homepage — no-op kept for call-site compatibility) ── */
+function updateBanner(state) {}
 
 /* ── Pages ── */
 function showPage(page) {
