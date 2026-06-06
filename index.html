@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trece Martires — Inventory Manager</title>
+<title>Stockwise — Inventory Manager</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -113,13 +113,29 @@ textarea{resize:vertical;min-height:70px}
 .import-drop:hover,.import-drop.drag{border-color:var(--accent);background:var(--accent-dim)}
 .import-drop-icon{font-size:30px;margin-bottom:10px;color:var(--muted)}
 .import-drop p{color:var(--muted);font-size:14px}
+/* Encryption */
+.enc-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;font-family:var(--mono)}
+.enc-on{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(74,222,128,0.3)}
+.enc-off{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.pw-modal{width:380px;max-width:96vw}
+.pw-input-wrap{position:relative}
+.pw-input-wrap input{padding-right:40px}
+.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0}
+/* Confirm modal */
+.confirm-modal{width:400px;max-width:96vw}
+.confirm-icon{font-size:32px;margin-bottom:14px}
+.confirm-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.confirm-body{font-size:13.5px;color:var(--muted);line-height:1.7;margin-bottom:6px}
+.confirm-detail{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin:14px 0;font-size:12.5px;font-family:var(--mono);color:var(--text);line-height:1.8}
+.confirm-detail span{color:var(--muted)}
+.confirm-warn{background:var(--warn-dim);border:1px solid rgba(251,191,36,0.3);border-radius:var(--radius);padding:10px 14px;font-size:12.5px;color:var(--warn);margin-top:10px}
 </style>
 </head>
 <body>
 <div class="shell">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="logo">MaMa<span>moStocck</span></div>
+    <div class="logo">Stock<span>wise</span></div>
     <nav>
       <div class="nav-item active" onclick="showPage('inventory')" id="nav-inventory">
         <span class="nav-icon">📦</span><span>Inventory</span>
@@ -135,11 +151,7 @@ textarea{resize:vertical;min-height:70px}
       </div>
     </nav>
     <div style="margin-top:auto;padding:0 14px 8px">
-      <button class="btn" style="width:100%;justify-content:center" onclick="syncToGitHub()">
-        <span id="sidebar-sync-spinner" class="sync-spinner"></span>
-        ↑ Sync to GitHub
-      </button>
-      <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="exportXLSX()">⬇ Export XLSX</button>
+      <button class="btn" style="width:100%;justify-content:center" onclick="exportXLSX()">⬇ Export XLSX</button>
       <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="exportCSV()">⬇ Export CSV</button>
     </div>
   </aside>
@@ -152,8 +164,6 @@ textarea{resize:vertical;min-height:70px}
       <div class="topbar">
         <h1 class="page-title">Inventory</h1>
         <div class="topbar-actions">
-          <div id="sync-spinner" class="sync-spinner"></div>
-          <button class="btn" onclick="loadFromGitHub()" id="btn-pull">↓ Pull from GitHub</button>
           <button class="btn btn-primary" onclick="openModal()">＋ Add Item</button>
         </div>
       </div>
@@ -288,6 +298,53 @@ textarea{resize:vertical;min-height:70px}
         <div id="conn-result" style="margin-top:14px;font-size:13px;display:none"></div>
       </div>
       <div class="settings-card">
+        <div class="settings-title" style="display:flex;align-items:center;gap:10px">🔐 Encryption <span id="enc-badge" class="enc-badge enc-off">OFF</span></div>
+        <div class="settings-desc">Encrypt your inventory with AES-256-GCM before pushing to GitHub. The files in your repo will be unreadable without the correct password. The password is only kept for this browser session.</div>
+        <div class="field-row">
+          <label>Encryption Password</label>
+          <div class="pw-input-wrap">
+            <input type="password" id="s-encpw" placeholder="Set a strong password…">
+            <button class="pw-toggle" type="button" onclick="togglePwVis('s-encpw',this)">👁</button>
+          </div>
+          <div class="hint">⚠ If you forget this password, your data in GitHub <strong>cannot be recovered</strong>. Store it somewhere safe.</div>
+        </div>
+        <div class="field-row">
+          <label>Confirm Password</label>
+          <div class="pw-input-wrap">
+            <input type="password" id="s-encpw2" placeholder="Repeat password…">
+            <button class="pw-toggle" type="button" onclick="togglePwVis('s-encpw2',this)">👁</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <button class="btn btn-primary" onclick="saveEncPassword()">Set Password</button>
+          <button class="btn btn-danger btn-sm" onclick="clearEncPassword()">Clear Password</button>
+        </div>
+        <div id="enc-result" style="margin-top:12px;font-size:13px;display:none"></div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-title">☁️ GitHub Sync</div>
+        <div class="settings-desc">Push your local inventory to the repository, or pull the latest version from it. Always review what will happen before confirming.</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">↑ Sync to GitHub</div>
+            <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Writes your current local inventory to the repo as <span style="font-family:var(--mono)">inventory.json</span> and <span style="font-family:var(--mono)">inventory.csv</span>.</div>
+            <button class="btn btn-primary" id="btn-sync" style="width:100%;justify-content:center" onclick="syncToGitHub()">
+              <span id="settings-sync-spinner" class="sync-spinner"></span>
+              ↑ Sync now
+            </button>
+          </div>
+          <div style="flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">↓ Pull from GitHub</div>
+            <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Replaces your local inventory with the <span style="font-family:var(--mono)">inventory.json</span> stored in the repo.</div>
+            <button class="btn" id="btn-pull" style="width:100%;justify-content:center" onclick="loadFromGitHub()">
+              <span id="settings-pull-spinner" class="sync-spinner"></span>
+              ↓ Pull now
+            </button>
+          </div>
+        </div>
+        <div id="last-synced" style="margin-top:12px;font-size:12px;color:var(--muted);font-family:var(--mono);display:none"></div>
+      </div>
+      <div class="settings-card">
         <div class="settings-title">🗂 Data Management</div>
         <div class="settings-desc">Danger zone — these actions cannot be undone.</div>
         <div style="display:flex;gap:10px">
@@ -320,6 +377,41 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div>
 
+<!-- Password Prompt Modal -->
+<div class="modal-overlay" id="pw-modal">
+  <div class="modal pw-modal">
+    <div class="modal-title">🔐 Enter Encryption Password</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:18px" id="pw-modal-desc">Enter your encryption password to continue.</p>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="pw-input-wrap">
+        <input type="password" id="pw-modal-input" placeholder="Your encryption password…" onkeydown="if(event.key==='Enter')pwModalOk()">
+        <button class="pw-toggle" type="button" onclick="togglePwVis('pw-modal-input',this)">👁</button>
+      </div>
+    </div>
+    <div id="pw-modal-err" style="margin-top:10px;font-size:12.5px;color:var(--danger);display:none"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="pwModalCancel()">Cancel</button>
+      <button class="btn btn-primary" onclick="pwModalOk()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal confirm-modal">
+    <div id="cm-icon" class="confirm-icon"></div>
+    <div id="cm-title" class="confirm-title"></div>
+    <div id="cm-body" class="confirm-body"></div>
+    <div id="cm-detail" class="confirm-detail" style="display:none"></div>
+    <div id="cm-warn" class="confirm-warn" style="display:none"></div>
+    <div class="modal-footer">
+      <button class="btn" id="cm-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn" id="cm-ok" onclick="confirmOk()">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -328,6 +420,135 @@ let inventory = [];
 let activityLog = [];
 let editingId = null;
 let ghConfig = null; // { token, repo, branch, path }
+
+/* ── Encryption (AES-256-GCM via Web Crypto) ── */
+let _encKey = null; // CryptoKey, lives only in memory for this session
+
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations:310000, hash:'SHA-256' },
+    keyMaterial,
+    { name:'AES-GCM', length:256 },
+    false, ['encrypt','decrypt']
+  );
+}
+async function encryptData(plaintext, password) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const key  = await deriveKey(password, salt);
+  const ct   = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(plaintext));
+  // Pack: magic(8) + salt(16) + iv(12) + ciphertext, base64 encoded
+  const magic = new TextEncoder().encode('SWENC01\n');
+  const buf = new Uint8Array(magic.length + salt.length + iv.length + ct.byteLength);
+  let off = 0;
+  buf.set(magic, off); off += magic.length;
+  buf.set(salt,  off); off += salt.length;
+  buf.set(iv,    off); off += iv.length;
+  buf.set(new Uint8Array(ct), off);
+  return btoa(String.fromCharCode(...buf));
+}
+async function decryptData(b64, password) {
+  let buf;
+  try { buf = Uint8Array.from(atob(b64), c=>c.charCodeAt(0)); } catch(e) { throw new Error('NOT_ENCRYPTED'); }
+  const magic = new TextDecoder().decode(buf.slice(0,8));
+  if (magic !== 'SWENC01\n') throw new Error('NOT_ENCRYPTED');
+  const salt = buf.slice(8, 24);
+  const iv   = buf.slice(24, 36);
+  const ct   = buf.slice(36);
+  const key  = await deriveKey(password, salt);
+  try {
+    const pt = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ct);
+    return new TextDecoder().decode(pt);
+  } catch(e) { throw new Error('WRONG_PASSWORD'); }
+}
+function isEncrypted(str) {
+  try {
+    const buf = Uint8Array.from(atob(str.trim()), c=>c.charCodeAt(0));
+    return new TextDecoder().decode(buf.slice(0,8)) === 'SWENC01\n';
+  } catch(e) { return false; }
+}
+
+/* ── Password session management ── */
+let _sessionPassword = null; // clears on tab close (not persisted)
+
+function getSessionPassword() { return _sessionPassword; }
+function setSessionPassword(pw) { _sessionPassword = pw; updateEncBadge(); }
+function clearSessionPassword() { _sessionPassword = null; updateEncBadge(); }
+
+function encryptionEnabled() {
+  // Encryption is "enabled" when a session password is active
+  return !!_sessionPassword;
+}
+function updateEncBadge() {
+  const b = document.getElementById('enc-badge');
+  if (!b) return;
+  if (_sessionPassword) {
+    b.className = 'enc-badge enc-on'; b.textContent = '🔒 ON';
+  } else {
+    b.className = 'enc-badge enc-off'; b.textContent = 'OFF';
+  }
+}
+
+function togglePwVis(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+function saveEncPassword() {
+  const pw  = document.getElementById('s-encpw').value;
+  const pw2 = document.getElementById('s-encpw2').value;
+  const res = document.getElementById('enc-result');
+  res.style.display = 'block';
+  if (!pw) { res.style.color='var(--danger)'; res.textContent='Password cannot be empty.'; return; }
+  if (pw.length < 8) { res.style.color='var(--danger)'; res.textContent='Use at least 8 characters.'; return; }
+  if (pw !== pw2) { res.style.color='var(--danger)'; res.textContent='Passwords do not match.'; return; }
+  setSessionPassword(pw);
+  document.getElementById('s-encpw').value  = '';
+  document.getElementById('s-encpw2').value = '';
+  res.style.color = 'var(--accent)';
+  res.textContent = '✓ Encryption password set for this session. Data will be encrypted on next sync.';
+  toast('Encryption enabled 🔒', 'var(--accent)');
+}
+function clearEncPassword() {
+  if (!_sessionPassword) { toast('No password set', 'var(--warn)'); return; }
+  if (!confirm('Clear the encryption password? Future syncs will save unencrypted data.')) return;
+  clearSessionPassword();
+  document.getElementById('enc-result').style.display = 'block';
+  document.getElementById('enc-result').style.color = 'var(--muted)';
+  document.getElementById('enc-result').textContent = 'Encryption password cleared for this session.';
+  toast('Encryption disabled');
+}
+
+/* ── Password prompt modal ── */
+let _pwModalCallback = null;
+function promptPassword(desc, callback) {
+  document.getElementById('pw-modal-desc').textContent = desc;
+  document.getElementById('pw-modal-input').value = '';
+  document.getElementById('pw-modal-err').style.display = 'none';
+  _pwModalCallback = callback;
+  document.getElementById('pw-modal').classList.add('open');
+  setTimeout(() => document.getElementById('pw-modal-input').focus(), 100);
+}
+function pwModalCancel() {
+  document.getElementById('pw-modal').classList.remove('open');
+  _pwModalCallback = null;
+}
+function pwModalOk() {
+  const pw = document.getElementById('pw-modal-input').value;
+  if (!pw) { showPwErr('Please enter a password.'); return; }
+  document.getElementById('pw-modal').classList.remove('open');
+  if (_pwModalCallback) _pwModalCallback(pw);
+  _pwModalCallback = null;
+}
+function showPwErr(msg) {
+  const e = document.getElementById('pw-modal-err');
+  e.textContent = msg; e.style.display = 'block';
+}
+document.getElementById('pw-modal').addEventListener('click', function(e) { if(e.target===this) pwModalCancel(); });
 
 /* ── Persist ── */
 function loadLocal() {
@@ -395,21 +616,71 @@ async function getFile(filename) {
   return decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))));
 }
 
+/* ── Confirm Modal ── */
+let _confirmCallback = null;
+function showConfirm({ icon, title, body, detail, warn, okLabel, okClass, onOk }) {
+  document.getElementById('cm-icon').textContent = icon || '❓';
+  document.getElementById('cm-title').textContent = title || 'Are you sure?';
+  document.getElementById('cm-body').textContent = body || '';
+  const det = document.getElementById('cm-detail');
+  if (detail) { det.innerHTML = detail; det.style.display = 'block'; } else det.style.display = 'none';
+  const w = document.getElementById('cm-warn');
+  if (warn) { w.textContent = warn; w.style.display = 'block'; } else w.style.display = 'none';
+  const okBtn = document.getElementById('cm-ok');
+  okBtn.textContent = okLabel || 'Confirm';
+  okBtn.className = 'btn ' + (okClass || 'btn-primary');
+  _confirmCallback = onOk;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function closeConfirm() {
+  document.getElementById('confirm-modal').classList.remove('open');
+  _confirmCallback = null;
+}
+function confirmOk() {
+  closeConfirm();
+  if (_confirmCallback) _confirmCallback();
+}
+document.getElementById('confirm-modal').addEventListener('click', function(e) { if (e.target===this) closeConfirm(); });
+
 /* ── Sync to GitHub ── */
-async function syncToGitHub() {
+function syncToGitHub() {
   if (!ghConfig || !ghConfig.token || !ghConfig.repo) {
     toast('Configure GitHub in Settings first', 'var(--warn)'); showPage('settings'); return;
   }
+  const low = inventory.filter(i=>getStatus(i)==='low').length;
+  const out = inventory.filter(i=>getStatus(i)==='out').length;
+  const val = inventory.reduce((s,i)=>s+(parseFloat(i.price)||0)*(parseInt(i.qty)||0),0);
+  const encStatus = encryptionEnabled() ? '🔒 Encrypted (AES-256-GCM)' : '⚠ Not encrypted (set a password in Settings)';
+  showConfirm({
+    icon: encryptionEnabled() ? '🔒' : '☁️',
+    title: 'Sync inventory to GitHub?',
+    body: 'This will write your current local inventory to your repository, overwriting the existing files.',
+    detail: `<span>Repository:</span> ${esc(ghConfig.repo)}<br><span>Branch:</span> ${esc(ghConfig.branch||'main')}<br><span>Files:</span> inventory.json, inventory.csv<br><span>Encryption:</span> ${encStatus}<br><span>Items:</span> ${inventory.length} total · ${low} low stock · ${out} out of stock<br><span>Total value:</span> ₱${val.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}`,
+    warn: inventory.length === 0 ? '⚠ Your inventory is empty — this will overwrite the repo with an empty file.' : null,
+    okLabel: '↑ Sync now',
+    okClass: 'btn-primary',
+    onOk: () => doSync()
+  });
+}
+async function doSync(password) {
+  // If encryption is enabled but no password passed yet, use session password
+  const pw = password || getSessionPassword();
   setSyncing(true);
   try {
-    const jsonStr = JSON.stringify(inventory, null, 2);
-    const csvStr  = buildCSV();
+    let jsonStr = JSON.stringify(inventory, null, 2);
+    let csvStr  = buildCSV();
+    if (pw) {
+      jsonStr = await encryptData(jsonStr, pw);
+      csvStr  = await encryptData(csvStr,  pw);
+    }
     const ts = new Date().toISOString();
-    await putFile('inventory.json', jsonStr, `Update inventory.json — ${inventory.length} items [${ts}]`);
-    await putFile('inventory.csv',  csvStr,  `Update inventory.csv  — ${inventory.length} items [${ts}]`);
-    logActivity(`Synced ${inventory.length} items to GitHub (${ghConfig.repo})`, 'sync');
-    toast('Synced to GitHub ✓', 'var(--accent)');
+    const enc = pw ? ' [encrypted]' : '';
+    await putFile('inventory.json', jsonStr, `Update inventory.json — ${inventory.length} items${enc} [${ts}]`);
+    await putFile('inventory.csv',  csvStr,  `Update inventory.csv  — ${inventory.length} items${enc} [${ts}]`);
+    logActivity(`Synced ${inventory.length} items to GitHub${pw?' (encrypted)':''}`, 'sync');
+    toast('Synced to GitHub ✓' + (pw?' 🔒':''), 'var(--accent)');
     updateBanner('connected');
+    updateLastSynced('Synced');
   } catch(err) {
     toast('Sync failed: ' + err.message, 'var(--danger)');
     logActivity('Sync failed: ' + err.message, 'error');
@@ -417,22 +688,71 @@ async function syncToGitHub() {
 }
 
 /* ── Pull from GitHub ── */
-async function loadFromGitHub() {
+function loadFromGitHub() {
   if (!ghConfig || !ghConfig.token || !ghConfig.repo) {
     toast('Configure GitHub in Settings first', 'var(--warn)'); showPage('settings'); return;
   }
+  showConfirm({
+    icon: '📥',
+    title: 'Pull inventory from GitHub?',
+    body: 'This will replace your local inventory with the version stored in your repository.',
+    detail: `<span>Repository:</span> ${esc(ghConfig.repo)}<br><span>Branch:</span> ${esc(ghConfig.branch||'main')}<br><span>File:</span> inventory.json`,
+    warn: inventory.length > 0 ? `⚠ Your current local inventory (${inventory.length} item${inventory.length!==1?'s':''}) will be replaced. Make sure you've synced first if you have unsaved changes.` : null,
+    okLabel: '↓ Pull now',
+    okClass: 'btn-primary',
+    onOk: doPull
+  });
+}
+async function doPull(password) {
+  const pw = password || getSessionPassword();
   setSyncing(true);
   try {
-    const raw = await getFile('inventory.json');
-    if (!raw) { toast('No inventory.json found in repo yet', 'var(--warn)'); return; }
+    let raw = await getFile('inventory.json');
+    if (!raw) { toast('No inventory.json found in repo yet', 'var(--warn)'); setSyncing(false); return; }
+    raw = raw.trim();
+    // Detect encryption
+    if (isEncrypted(raw)) {
+      if (!pw) {
+        // Need a password — prompt for it
+        setSyncing(false);
+        promptPassword('The inventory file in GitHub is encrypted. Enter the password to decrypt it.', async (enteredPw) => {
+          await doPull(enteredPw);
+        });
+        return;
+      }
+      try {
+        raw = await decryptData(raw, pw);
+        // Save password to session on success
+        setSessionPassword(pw);
+      } catch(e) {
+        if (e.message === 'WRONG_PASSWORD') {
+          setSyncing(false);
+          showConfirm({
+            icon: '⚠️',
+            title: 'Wrong password',
+            body: 'The password you entered could not decrypt the inventory file. The data was not changed.',
+            warn: 'Double-check your encryption password and try again.',
+            okLabel: 'Try again',
+            okClass: 'btn-warn',
+            onOk: () => promptPassword('Enter the correct encryption password.', async (p) => await doPull(p))
+          });
+          return;
+        }
+        throw e;
+      }
+    } else if (pw) {
+      // File is not encrypted but we have a password — warn the user
+      toast('⚠ File in repo is not encrypted. Pulling as plain data.', 'var(--warn)');
+    }
     const data = JSON.parse(raw);
-    if (!Array.isArray(data)) throw new Error('inventory.json is not an array');
+    if (!Array.isArray(data)) throw new Error('inventory.json is not a valid array');
     inventory = data;
     saveLocal();
     renderTable();
     logActivity(`Pulled ${inventory.length} items from GitHub (${ghConfig.repo})`, 'sync');
-    toast(`Pulled ${inventory.length} items from GitHub ✓`, 'var(--accent)');
+    toast(`Pulled ${inventory.length} items ✓`, 'var(--accent)');
     updateBanner('connected');
+    updateLastSynced('Pulled');
   } catch(err) {
     toast('Pull failed: ' + err.message, 'var(--danger)');
     logActivity('Pull failed: ' + err.message, 'error');
@@ -440,10 +760,20 @@ async function loadFromGitHub() {
 }
 
 function setSyncing(on) {
-  ['sync-spinner','sidebar-sync-spinner'].forEach(id => {
-    document.getElementById(id).classList.toggle('active', on);
+  ['settings-sync-spinner','settings-pull-spinner'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', on);
   });
-  document.getElementById('btn-pull').disabled = on;
+  const btnPull = document.getElementById('btn-pull');
+  const btnSync = document.getElementById('btn-sync');
+  if (btnPull) btnPull.disabled = on;
+  if (btnSync) btnSync.disabled = on;
+}
+function updateLastSynced(action) {
+  const el = document.getElementById('last-synced');
+  if (!el) return;
+  el.style.display = 'block';
+  el.textContent = `Last ${action.toLowerCase()}: ${new Date().toLocaleString()}`;
 }
 
 /* ── Settings ── */
@@ -804,6 +1134,7 @@ loadLocal();
 renderTable();
 renderHistory();
 updateBanner(ghConfig ? 'connected' : 'disconnected');
+updateEncBadge();
 </script>
 </body>
 </html>
