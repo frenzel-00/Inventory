@@ -1,13 +1,112 @@
 [
   {
     "id": "mpxyud382oxny",
-    "sku": "test pc to phone1",
+    "sku": "test pc to 13T",
     "name": "test pc to phone1",
-    "category": "",
+    "category": "Electronic Testing",
     "qty": 3333,
     "low": 5,
     "price": 333,
     "date": "2026-06-03",
+    "notes": ""
+  },
+  {
+    "id": "mq1zrh82h31ge",
+    "sku": "",
+    "name": "¼ 1 Wire Hose",
+    "category": "Wired Hose",
+    "qty": 136,
+    "low": 10,
+    "price": 150,
+    "date": "2026-06-06",
+    "notes": ""
+  },
+  {
+    "id": "mq1zrh82dw1hf",
+    "sku": "",
+    "name": "⅜ 1 Wire Hose",
+    "category": "Wired Hose",
+    "qty": 203,
+    "low": 10,
+    "price": 160,
+    "date": "2026-06-06",
+    "notes": ""
+  },
+  {
+    "id": "mq1zrh82az5h4",
+    "sku": "",
+    "name": "½ 1 Wire Hose",
+    "category": "Wired Hose",
+    "qty": 17,
+    "low": 10,
+    "price": 200,
+    "date": "2026-06-06",
+    "notes": ""
+  },
+  {
+    "id": "mq1zrh82vh44h",
+    "sku": "",
+    "name": "⅝ 1 Wire Hose",
+    "category": "Wired Hose",
+    "qty": 180,
+    "low": 10,
+    "price": 250,
+    "date": "2026-06-06",
+    "notes": ""
+  },
+  {
+    "id": "mq1zrh82pj9aq",
+    "sku": "",
+    "name": "¾ 1 Wire Hose",
+    "category": "Wired Hose",
+    "qty": 10,
+    "low": 10,
+    "price": 400,
+    "date": "2026-06-06",
+    "notes": ""
+  },
+  {
+    "id": "mq1zrh825z69w",
+    "sku": "",
+    "name": "1\" 1 Wire Hose",
+    "category": "Wired Hose",
+    "qty": 42,
+    "low": 10,
+    "price": 450,
+    "date": "2026-06-06",
+    "notes": ""
+  },
+  {
+    "id": "mq1zrh82pz2jk",
+    "sku": "",
+    "name": "1 ¼ \" 1 Wire Hose",
+    "category": "Wired Hose",
+    "qty": 12,
+    "low": 10,
+    "price": 650,
+    "date": "2026-06-06",
+    "notes": ""
+  },
+  {
+    "id": "mq1zrh823jvfl",
+    "sku": "",
+    "name": "1 ½ \" 1 Wire Hose",
+    "category": "Wired Hose",
+    "qty": 15,
+    "low": 10,
+    "price": 800,
+    "date": "2026-06-06",
+    "notes": ""
+  },
+  {
+    "id": "mq1zrh82cgou2",
+    "sku": "",
+    "name": "2 \" 1 Wire Hose",
+    "category": "Wired Hose",
+    "qty": 7,
+    "low": 10,
+    "price": 1200,
+    "date": "2026-06-06",
     "notes": ""
   }
 ]
