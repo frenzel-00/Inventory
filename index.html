@@ -440,7 +440,7 @@ async function encryptData(plaintext, password) {
   const iv   = crypto.getRandomValues(new Uint8Array(12));
   const key  = await deriveKey(password, salt);
   const ct   = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(plaintext));
-  // Pack: magic(8) + salt(16) + iv(12) + ciphertext, base64 encoded
+  // Pack: magic(8) + salt(16) + iv(12) + ciphertext
   const magic = new TextEncoder().encode('SWENC01\n');
   const buf = new Uint8Array(magic.length + salt.length + iv.length + ct.byteLength);
   let off = 0;
@@ -448,7 +448,13 @@ async function encryptData(plaintext, password) {
   buf.set(salt,  off); off += salt.length;
   buf.set(iv,    off); off += iv.length;
   buf.set(new Uint8Array(ct), off);
-  return btoa(String.fromCharCode(...buf));
+  // Safe base64 encoding that works for large buffers
+  let binary = '';
+  const chunk = 8192;
+  for (let i = 0; i < buf.length; i += chunk) {
+    binary += String.fromCharCode(...buf.subarray(i, i + chunk));
+  }
+  return btoa(binary);
 }
 async function decryptData(b64, password) {
   let buf;
@@ -650,21 +656,20 @@ function syncToGitHub() {
   const low = inventory.filter(i=>getStatus(i)==='low').length;
   const out = inventory.filter(i=>getStatus(i)==='out').length;
   const val = inventory.reduce((s,i)=>s+(parseFloat(i.price)||0)*(parseInt(i.qty)||0),0);
-  const encStatus = encryptionEnabled() ? '🔒 Encrypted (AES-256-GCM)' : '⚠ Not encrypted (set a password in Settings)';
+  const pw  = getSessionPassword(); // snapshot now, before modal closes
+  const encStatus = pw ? '🔒 Encrypted (AES-256-GCM)' : '⚠ Not encrypted (set a password in Settings)';
   showConfirm({
-    icon: encryptionEnabled() ? '🔒' : '☁️',
+    icon: pw ? '🔒' : '☁️',
     title: 'Sync inventory to GitHub?',
     body: 'This will write your current local inventory to your repository, overwriting the existing files.',
     detail: `<span>Repository:</span> ${esc(ghConfig.repo)}<br><span>Branch:</span> ${esc(ghConfig.branch||'main')}<br><span>Files:</span> inventory.json, inventory.csv<br><span>Encryption:</span> ${encStatus}<br><span>Items:</span> ${inventory.length} total · ${low} low stock · ${out} out of stock<br><span>Total value:</span> ₱${val.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}`,
     warn: inventory.length === 0 ? '⚠ Your inventory is empty — this will overwrite the repo with an empty file.' : null,
     okLabel: '↑ Sync now',
     okClass: 'btn-primary',
-    onOk: () => doSync()
+    onOk: () => doSync(pw)
   });
 }
-async function doSync(password) {
-  // If encryption is enabled but no password passed yet, use session password
-  const pw = password || getSessionPassword();
+async function doSync(pw) {
   setSyncing(true);
   try {
     let jsonStr = JSON.stringify(inventory, null, 2);
@@ -673,7 +678,7 @@ async function doSync(password) {
       jsonStr = await encryptData(jsonStr, pw);
       csvStr  = await encryptData(csvStr,  pw);
     }
-    const ts = new Date().toISOString();
+    const ts  = new Date().toISOString();
     const enc = pw ? ' [encrypted]' : '';
     await putFile('inventory.json', jsonStr, `Update inventory.json — ${inventory.length} items${enc} [${ts}]`);
     await putFile('inventory.csv',  csvStr,  `Update inventory.csv  — ${inventory.length} items${enc} [${ts}]`);
@@ -692,6 +697,7 @@ function loadFromGitHub() {
   if (!ghConfig || !ghConfig.token || !ghConfig.repo) {
     toast('Configure GitHub in Settings first', 'var(--warn)'); showPage('settings'); return;
   }
+  const pw = getSessionPassword(); // snapshot now
   showConfirm({
     icon: '📥',
     title: 'Pull inventory from GitHub?',
@@ -700,7 +706,7 @@ function loadFromGitHub() {
     warn: inventory.length > 0 ? `⚠ Your current local inventory (${inventory.length} item${inventory.length!==1?'s':''}) will be replaced. Make sure you've synced first if you have unsaved changes.` : null,
     okLabel: '↓ Pull now',
     okClass: 'btn-primary',
-    onOk: doPull
+    onOk: () => doPull(pw)
   });
 }
 async function doPull(password) {
