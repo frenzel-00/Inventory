@@ -598,9 +598,25 @@ async function getFileSHA(filename) {
 }
 async function putFile(filename, content, message) {
   const sha = await getFileSHA(filename);
+  // If content is already base64 (encrypted), use it directly.
+  // Otherwise encode it properly for the GitHub API.
+  let encoded;
+  if (/^[A-Za-z0-9+/]+=*$/.test(content.replace(/\s/g,'')) && content.length > 50) {
+    // Looks like base64 already (encrypted payload)
+    encoded = content;
+  } else {
+    // Plain text — encode to base64 safely in chunks
+    const bytes = new TextEncoder().encode(content);
+    let binary = '';
+    const chunk = 8192;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    encoded = btoa(binary);
+  }
   const body = {
     message,
-    content: btoa(unescape(encodeURIComponent(content))),
+    content: encoded,
     branch: ghConfig.branch || 'main'
   };
   if (sha) body.sha = sha;
@@ -608,7 +624,7 @@ async function putFile(filename, content, message) {
     method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body)
   });
   if (!r.ok) {
-    const e = await r.json();
+    const e = await r.json().catch(() => ({}));
     throw new Error(e.message || ('GitHub write error: ' + r.status));
   }
   return r.json();
@@ -675,12 +691,15 @@ async function doSync(pw) {
     let jsonStr = JSON.stringify(inventory, null, 2);
     let csvStr  = buildCSV();
     if (pw) {
+      toast('Encrypting…', 'var(--info)');
       jsonStr = await encryptData(jsonStr, pw);
       csvStr  = await encryptData(csvStr,  pw);
     }
     const ts  = new Date().toISOString();
     const enc = pw ? ' [encrypted]' : '';
+    toast('Uploading inventory.json…', 'var(--info)');
     await putFile('inventory.json', jsonStr, `Update inventory.json — ${inventory.length} items${enc} [${ts}]`);
+    toast('Uploading inventory.csv…', 'var(--info)');
     await putFile('inventory.csv',  csvStr,  `Update inventory.csv  — ${inventory.length} items${enc} [${ts}]`);
     logActivity(`Synced ${inventory.length} items to GitHub${pw?' (encrypted)':''}`, 'sync');
     toast('Synced to GitHub ✓' + (pw?' 🔒':''), 'var(--accent)');
@@ -689,6 +708,7 @@ async function doSync(pw) {
   } catch(err) {
     toast('Sync failed: ' + err.message, 'var(--danger)');
     logActivity('Sync failed: ' + err.message, 'error');
+    console.error('Stockwise sync error:', err);
   } finally { setSyncing(false); }
 }
 
